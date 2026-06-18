@@ -1,2094 +1,745 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsMind · 新闻分析智能体</title>
+    <title>新闻分析智能体</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        bg: '#0f172a',
+                        panel: '#1e293b',
+                        border: '#334155',
+                        text: '#e2e8f0',
+                        sub: '#94a3b8'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        :root {
-            --primary: #4F46E5;
-            --primary-light: #818CF8;
-            --primary-dark: #3730A3;
-            --accent: #06B6D4;
-            --accent-light: #67E8F9;
-            --bg-dark: #0F172A;
-            --bg-card: #1E293B;
-            --bg-card-hover: #273548;
-            --bg-input: #334155;
-            --text-primary: #F1F5F9;
-            --text-secondary: #94A3B8;
-            --text-muted: #64748B;
-            --border: #334155;
-            --success: #10B981;
-            --warning: #F59E0B;
-            --danger: #EF4444;
-            --gradient-1: linear-gradient(135deg, #4F46E5, #06B6D4);
-            --gradient-2: linear-gradient(135deg, #7C3AED, #EC4899);
-            --shadow: 0 4px 24px rgba(0,0,0,0.3);
-            --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
-        }
-
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-primary);
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        .app-container {
-            display: flex;
-            height: 100vh;
-        }
-
-        /* Sidebar */
-        .sidebar {
-            width: 300px;
-            background: linear-gradient(180deg, #1a1f3a 0%, #0F172A 100%);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            transition: transform 0.3s ease;
-        }
-
-        .sidebar-header {
-            padding: 24px 20px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 8px;
-        }
-
-        .logo-icon {
-            width: 42px;
-            height: 42px;
-            background: var(--gradient-1);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 22px;
-            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
-        }
-
-        .logo-text {
-            font-size: 22px;
-            font-weight: 700;
-            background: var(--gradient-1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.5px;
-        }
-
-        .logo-subtitle {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-left: 54px;
-            margin-top: -4px;
-        }
-
-        .agent-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 16px;
-            padding: 10px 14px;
-            background: rgba(16, 185, 129, 0.1);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            border-radius: 10px;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--success);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
-        }
-
-        .status-text {
-            font-size: 13px;
-            color: var(--success);
-            font-weight: 500;
-        }
-
-        /* Capabilities Section */
-        .capabilities {
-            padding: 20px;
-            flex: 1;
-            overflow-y: auto;
-        }
-
-        .capabilities::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .capabilities::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
-
-        .section-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            color: var(--text-muted);
-            margin-bottom: 14px;
-            font-weight: 600;
-        }
-
-        .capability-card {
-            padding: 14px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .capability-card:hover {
-            background: var(--bg-card-hover);
-            border-color: var(--primary-light);
-            transform: translateX(4px);
-        }
-
-        .capability-card.active {
-            border-color: var(--primary);
-            background: rgba(79, 70, 229, 0.1);
-        }
-
-        .cap-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 6px;
-        }
-
-        .cap-icon {
-            font-size: 18px;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: rgba(79, 70, 229, 0.15);
-            border-radius: 8px;
-        }
-
-        .cap-name {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .cap-desc {
-            font-size: 12px;
-            color: var(--text-secondary);
-            line-height: 1.5;
-            margin-left: 42px;
-        }
-
-        /* Stats */
-        .sidebar-stats {
-            padding: 16px 20px;
-            border-top: 1px solid var(--border);
-        }
-
-        .stat-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 6px 0;
-        }
-
-        .stat-label {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .stat-value {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        /* Main Content */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        /* Top Bar */
-        .top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px 28px;
-            border-bottom: 1px solid var(--border);
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-        }
-
-        .search-section {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            flex: 1;
-            max-width: 700px;
-        }
-
-        .search-box {
-            flex: 1;
-            position: relative;
-        }
-
-        .search-box input {
-            width: 100%;
-            padding: 12px 16px 12px 44px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 14px;
-            outline: none;
-            transition: all 0.2s ease;
-        }
-
-        .search-box input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
-        }
-
-        .search-box input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            font-size: 18px;
-            color: var(--text-muted);
-        }
-
-        .search-btn {
-            padding: 12px 24px;
-            background: var(--gradient-1);
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .search-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
-        }
-
-        .search-btn:active {
-            transform: translateY(0);
-        }
-
-        .time-filters {
-            display: flex;
-            gap: 6px;
-            margin-left: 8px;
-        }
-
-        .time-btn {
-            padding: 8px 16px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .time-btn:hover {
-            border-color: var(--primary-light);
-            color: var(--text-primary);
-        }
-
-        .time-btn.active {
-            background: var(--primary);
-            border-color: var(--primary);
-            color: white;
-        }
-
-        /* Content Area */
-        .content-area {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-        }
-
-        /* Chat Panel */
-        .chat-panel {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-        }
-
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px 28px;
-        }
-
-        .chat-messages::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .chat-messages::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 6px;
-        }
-
-        .welcome-section {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            padding: 40px;
-        }
-
-        .welcome-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            animation: float 3s ease-in-out infinite;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        }
-
-        .welcome-title {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            background: var(--gradient-1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .welcome-desc {
-            font-size: 15px;
-            color: var(--text-secondary);
-            max-width: 500px;
-            line-height: 1.7;
-            margin-bottom: 32px;
-        }
-
-        .quick-actions {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-            max-width: 560px;
-            width: 100%;
-        }
-
-        .quick-action {
-            padding: 16px 20px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            text-align: left;
-        }
-
-        .quick-action:hover {
-            border-color: var(--primary-light);
-            background: var(--bg-card-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow);
-        }
-
-        .qa-icon {
-            font-size: 24px;
-            margin-bottom: 8px;
-        }
-
-        .qa-title {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 4px;
-        }
-
-        .qa-desc {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        /* Messages */
-        .message {
-            display: flex;
-            gap: 14px;
-            margin-bottom: 24px;
-            animation: messageIn 0.3s ease;
-        }
-
-        @keyframes messageIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .message-avatar {
-            width: 38px;
-            height: 38px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-        }
-
-        .message.user .message-avatar {
-            background: var(--gradient-2);
-        }
-
-        .message.agent .message-avatar {
-            background: var(--gradient-1);
-        }
-
-        .message-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .message-header {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 8px;
-        }
-
-        .message-name {
-            font-size: 14px;
-            font-weight: 600;
-        }
-
-        .message-time {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .message-body {
-            font-size: 14px;
-            line-height: 1.8;
-            color: var(--text-secondary);
-        }
-
-        .message-body p {
-            margin-bottom: 8px;
-        }
-
-        .message-body h3 {
-            color: var(--text-primary);
-            font-size: 16px;
-            margin: 16px 0 8px;
-        }
-
-        .message-body h4 {
-            color: var(--accent-light);
-            font-size: 14px;
-            margin: 12px 0 6px;
-        }
-
-        .message-body ul, .message-body ol {
-            padding-left: 20px;
-            margin-bottom: 8px;
-        }
-
-        .message-body li {
-            margin-bottom: 4px;
-        }
-
-        .message-body code {
-            background: var(--bg-input);
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 13px;
-        }
-
-        .message-body strong {
-            color: var(--text-primary);
-        }
-
-        .message-body blockquote {
-            border-left: 3px solid var(--primary);
-            padding-left: 14px;
-            margin: 12px 0;
-            color: var(--text-muted);
-            font-style: italic;
-        }
-
-        .message-body table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 12px 0;
-        }
-
-        .message-body table th,
-        .message-body table td {
-            padding: 10px 14px;
-            border: 1px solid var(--border);
-            text-align: left;
-            font-size: 13px;
-        }
-
-        .message-body table th {
-            background: var(--bg-input);
-            color: var(--text-primary);
-            font-weight: 600;
-        }
-
-        /* News Cards inside messages */
-        .news-card-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin: 12px 0;
-        }
-
-        .news-card {
-            padding: 14px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            transition: all 0.2s ease;
-            cursor: pointer;
-        }
-
-        .news-card:hover {
-            border-color: var(--primary-light);
-            background: var(--bg-card-hover);
-        }
-
-        .news-card-source {
-            font-size: 11px;
-            color: var(--accent);
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-
-        .news-card-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 6px;
-            line-height: 1.5;
-        }
-
-        .news-card-meta {
-            display: flex;
-            gap: 12px;
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .news-card-tag {
-            padding: 2px 8px;
-            background: rgba(79, 70, 229, 0.15);
-            border-radius: 4px;
-            font-size: 11px;
-            color: var(--primary-light);
-        }
-
-        /* Analysis sections */
-        .analysis-section {
-            margin: 12px 0;
-            padding: 16px;
-            background: rgba(6, 182, 212, 0.05);
-            border: 1px solid rgba(6, 182, 212, 0.15);
-            border-radius: 10px;
-        }
-
-        .analysis-section h4 {
-            color: var(--accent-light) !important;
-            margin-top: 0 !important;
-        }
-
-        .sentiment-bar {
-            display: flex;
-            gap: 4px;
-            margin: 8px 0;
-        }
-
-        .sentiment-segment {
-            height: 6px;
-            border-radius: 3px;
-            transition: width 0.5s ease;
-        }
-
-        .sentiment-positive { background: var(--success); }
-        .sentiment-neutral { background: var(--warning); }
-        .sentiment-negative { background: var(--danger); }
-
-        .sentiment-labels {
-            display: flex;
-            justify-content: space-between;
-            font-size: 11px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        /* Typing indicator */
-        .typing-indicator {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            padding: 8px 0;
-        }
-
+        * { box-sizing: border-box; }
+        body { font-family: system-ui, -apple-system, sans-serif; }
+        .scrollbar::-webkit-scrollbar { width: 6px; }
+        .scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .scrollbar::-webkit-scrollbar-track { background: transparent; }
         .typing-dot {
-            width: 8px;
-            height: 8px;
-            background: var(--primary-light);
-            border-radius: 50%;
-            animation: typingBounce 1.4s infinite;
+            animation: typing 1.4s infinite ease-in-out;
         }
-
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-
-        @keyframes typingBounce {
-            0%, 60%, 100% { transform: translateY(0); }
-            30% { transform: translateY(-8px); }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+            30% { transform: translateY(-4px); opacity: 1; }
         }
-
-        /* Chat Input */
-        .chat-input-area {
-            padding: 16px 28px 20px;
-            border-top: 1px solid var(--border);
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(12px);
-        }
-
-        .input-actions {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 10px;
-        }
-
-        .input-action-btn {
-            padding: 6px 12px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-muted);
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .input-action-btn:hover {
-            border-color: var(--primary-light);
-            color: var(--text-primary);
-        }
-
-        .chat-input-wrapper {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
-        }
-
-        .chat-input {
-            flex: 1;
-            padding: 14px 18px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 14px;
-            color: var(--text-primary);
-            font-size: 14px;
-            resize: none;
-            outline: none;
-            min-height: 48px;
-            max-height: 120px;
-            font-family: inherit;
-            line-height: 1.5;
-            transition: border-color 0.2s ease;
-        }
-
-        .chat-input:focus {
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
-        }
-
-        .chat-input::placeholder {
-            color: var(--text-muted);
-        }
-
-        .send-btn {
-            width: 48px;
-            height: 48px;
-            background: var(--gradient-1);
-            border: none;
-            border-radius: 14px;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .send-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
-        }
-
-        .send-btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        /* Report Panel */
-        .report-panel {
-            width: 420px;
-            border-left: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            background: rgba(30, 41, 59, 0.5);
-            transition: all 0.3s ease;
-        }
-
-        .report-panel.hidden {
-            width: 0;
-            overflow: hidden;
-            border: none;
-        }
-
-        .report-header {
-            padding: 18px 20px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .report-title {
-            font-size: 15px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .report-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        .report-action-btn {
-            width: 32px;
-            height: 32px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-muted);
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-
-        .report-action-btn:hover {
-            border-color: var(--primary-light);
-            color: var(--text-primary);
-        }
-
-        .report-content {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .report-content::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .report-content::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
-
-        .report-section {
-            margin-bottom: 20px;
-        }
-
-        .report-section-title {
-            font-size: 13px;
-            font-weight: 700;
-            color: var(--accent-light);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .report-section-body {
-            font-size: 13px;
-            color: var(--text-secondary);
-            line-height: 1.8;
-        }
-
-        .report-placeholder {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            color: var(--text-muted);
-        }
-
-        .report-placeholder-icon {
-            font-size: 48px;
-            margin-bottom: 16px;
-            opacity: 0.5;
-        }
-
-        .report-placeholder-text {
-            font-size: 14px;
-        }
-
-        /* Keyword Tags */
-        .keyword-tags {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin: 8px 0;
-        }
-
-        .keyword-tag {
-            padding: 4px 10px;
-            background: rgba(79, 70, 229, 0.12);
-            border: 1px solid rgba(79, 70, 229, 0.25);
-            border-radius: 6px;
-            font-size: 12px;
-            color: var(--primary-light);
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .keyword-tag:hover {
-            background: rgba(79, 70, 229, 0.25);
-        }
-
-        /* Progress Steps */
-        .progress-steps {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin: 12px 0;
-        }
-
-        .progress-step {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .progress-step.completed {
-            color: var(--success);
-        }
-
-        .progress-step.active {
-            color: var(--accent);
-        }
-
-        .step-icon {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
-
-        .progress-step.completed .step-icon {
-            background: rgba(16, 185, 129, 0.15);
-        }
-
-        .progress-step.active .step-icon {
-            background: rgba(6, 182, 212, 0.15);
-            animation: pulse 1.5s infinite;
-        }
-
-        /* Toggle button for report panel */
-        .toggle-report-btn {
-            padding: 8px 14px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            color: var(--text-secondary);
-            font-size: 13px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.2s ease;
-        }
-
-        .toggle-report-btn:hover {
-            border-color: var(--primary-light);
-            color: var(--text-primary);
-        }
-
-        /* Mobile sidebar toggle */
-        .mobile-menu-btn {
-            display: none;
-            width: 40px;
-            height: 40px;
-            background: var(--bg-input);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-primary);
-            font-size: 20px;
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-        }
-
-        /* Loading shimmer */
-        .shimmer {
-            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-            border-radius: 6px;
-        }
-
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .shimmer-line {
-            height: 14px;
-            margin-bottom: 8px;
-        }
-
-        .shimmer-line:last-child {
-            width: 60%;
-        }
-
-        /* Responsive */
-        @media (max-width: 1200px) {
-            .report-panel {
-                width: 360px;
-            }
-        }
-
-        @media (max-width: 960px) {
-            .sidebar {
-                position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
-                z-index: 100;
-                transform: translateX(-100%);
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .mobile-menu-btn {
-                display: flex;
-            }
-            .report-panel {
-                display: none;
-            }
-            .time-filters {
-                display: none;
-            }
-        }
-
-        @media (max-width: 640px) {
-            .top-bar {
-                padding: 12px 16px;
-            }
-            .chat-messages {
-                padding: 16px;
-            }
-            .chat-input-area {
-                padding: 12px 16px 16px;
-            }
-            .quick-actions {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Markdown report styling */
-        .md-report {
-            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
-            font-size: 12px;
-            line-height: 1.7;
-            color: var(--text-secondary);
-            white-space: pre-wrap;
-            word-break: break-word;
-        }
-
-        .md-report .md-h1 {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 16px 0 8px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .md-report .md-h2 {
-            font-size: 15px;
-            font-weight: 700;
-            color: var(--accent-light);
-            margin: 14px 0 6px;
-        }
-
-        .md-report .md-h3 {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin: 10px 0 4px;
-        }
-
-        .md-report .md-bold { color: var(--text-primary); font-weight: 600; }
-        .md-report .md-code { background: var(--bg-input); padding: 1px 4px; border-radius: 3px; }
-
-        /* Conversation memory indicator */
-        .memory-indicator {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            background: rgba(124, 58, 237, 0.1);
-            border: 1px solid rgba(124, 58, 237, 0.2);
-            border-radius: 8px;
-            font-size: 12px;
-            color: #A78BFA;
-        }
-
-        .new-chat-btn {
-            padding: 10px 18px;
-            background: transparent;
-            border: 1px dashed var(--border);
-            border-radius: 10px;
-            color: var(--text-muted);
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-        }
-
-        .new-chat-btn:hover {
-            border-color: var(--primary-light);
-            color: var(--text-primary);
-            background: rgba(79, 70, 229, 0.05);
+        .fade-in { animation: fadeIn 0.25s ease-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
-<body>
-    <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <div class="logo-icon">🧠</div>
-                    <span class="logo-text">NewsMind</span>
+<body class="bg-bg text-text h-screen flex overflow-hidden">
+
+    <!-- 左侧边栏 -->
+    <aside class="w-60 bg-panel border-r border-border flex flex-col flex-shrink-0">
+        <div class="p-4 border-b border-border">
+            <div class="flex items-center gap-2">
+                <i class="fa fa-newspaper-o text-primary text-xl"></i>
+                <h1 class="font-bold text-lg">新闻分析智能体</h1>
+            </div>
+            <p class="text-xs text-sub mt-1">大模型驱动 · 实时资讯分析</p>
+        </div>
+
+        <button id="newChatBtn" class="mx-3 my-3 py-2 bg-primary hover:bg-blue-600 rounded text-sm font-medium transition">
+            <i class="fa fa-plus mr-1"></i> 新建对话
+        </button>
+
+        <div class="px-3 mb-2">
+            <p class="text-xs text-sub mb-2 px-2">核心功能</p>
+            <div class="space-y-1 text-sm">
+                <div class="px-3 py-2 rounded hover:bg-slate-700/50 cursor-pointer flex items-center gap-2 text-sub hover:text-text transition">
+                    <i class="fa fa-search w-4 text-center"></i>
+                    <span>实时新闻搜索</span>
                 </div>
-                <div class="logo-subtitle">AI 新闻分析智能体</div>
-                <div class="agent-status">
-                    <div class="status-dot"></div>
-                    <span class="status-text">智能体运行中</span>
+                <div class="px-3 py-2 rounded hover:bg-slate-700/50 cursor-pointer flex items-center gap-2 text-sub hover:text-text transition">
+                    <i class="fa fa-bar-chart w-4 text-center"></i>
+                    <span>多维度深度分析</span>
+                </div>
+                <div class="px-3 py-2 rounded hover:bg-slate-700/50 cursor-pointer flex items-center gap-2 text-sub hover:text-text transition">
+                    <i class="fa fa-line-chart w-4 text-center"></i>
+                    <span>趋势预测研判</span>
+                </div>
+                <div class="px-3 py-2 rounded hover:bg-slate-700/50 cursor-pointer flex items-center gap-2 text-sub hover:text-text transition">
+                    <i class="fa fa-file-text w-4 text-center"></i>
+                    <span>结构化报告导出</span>
                 </div>
             </div>
+        </div>
 
-            <div class="capabilities">
-                <div class="section-title">🛠️ 智能体能力</div>
+        <div class="flex-1"></div>
 
-                <div class="capability-card active" id="cap-search">
-                    <div class="cap-header">
-                        <div class="cap-icon">🔍</div>
-                        <span class="cap-name">实时新闻获取</span>
-                    </div>
-                    <div class="cap-desc">搜索任意话题的最新新闻资讯，聚合多源信息</div>
-                </div>
+        <div class="p-3 border-t border-border">
+            <div class="flex items-center gap-2 mb-3 px-2">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                <span class="text-xs text-sub" id="currentModelName">当前模型：通义千问</span>
+            </div>
+            <button id="settingsBtn" class="w-full py-2 text-sm text-sub hover:text-text transition text-left px-2 rounded hover:bg-slate-700/50">
+                <i class="fa fa-cog mr-2"></i> 系统设置
+            </button>
+        </div>
+    </aside>
 
-                <div class="capability-card" id="cap-analyze">
-                    <div class="cap-header">
-                        <div class="cap-icon">🔬</div>
-                        <span class="cap-name">深度分析</span>
-                    </div>
-                    <div class="cap-desc">多维度解读新闻：背景溯源、影响评估、趋势预测</div>
-                </div>
-
-                <div class="capability-card" id="cap-report">
-                    <div class="cap-header">
-                        <div class="cap-icon">📊</div>
-                        <span class="cap-name">结构化输出</span>
-                    </div>
-                    <div class="cap-desc">Markdown 格式分析报告，数据可视化呈现</div>
-                </div>
-
-                <div class="capability-card" id="cap-memory">
-                    <div class="cap-header">
-                        <div class="cap-icon">💬</div>
-                        <span class="cap-name">对话记忆</span>
-                    </div>
-                    <div class="cap-desc">支持多轮深入探讨，上下文自动关联</div>
-                </div>
-
-                <div class="capability-card" id="cap-time">
-                    <div class="cap-header">
-                        <div class="cap-icon">⏰</div>
-                        <span class="cap-name">多时间维度</span>
-                    </div>
-                    <div class="cap-desc">按天、周、月灵活筛选，精准定位信息</div>
-                </div>
-
-                <button class="new-chat-btn" id="newChatBtn">
-                    ✨ 开启新对话
+    <!-- 主内容区 -->
+    <main class="flex-1 flex flex-col min-w-0">
+        <!-- 顶部栏 -->
+        <header class="h-14 border-b border-border flex items-center justify-between px-5 flex-shrink-0">
+            <div class="text-sm text-sub">
+                <span id="topicDisplay">请输入话题开始搜索分析</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <select id="modelSelector" class="bg-panel border border-border rounded px-3 py-1.5 text-sm focus:outline-none focus:border-primary">
+                    <option value="qwen">通义千问</option>
+                    <option value="doubao">豆包 (字节)</option>
+                    <option value="deepseek">DeepSeek</option>
+                </select>
+                <button id="exportBtn" class="px-3 py-1.5 bg-panel border border-border rounded text-sm hover:border-primary transition">
+                    <i class="fa fa-download mr-1"></i> 导出报告
                 </button>
             </div>
+        </header>
 
-            <div class="sidebar-stats">
-                <div class="stat-row">
-                    <span class="stat-label">对话轮次</span>
-                    <span class="stat-value" id="turnCount">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">已分析新闻</span>
-                    <span class="stat-value" id="newsCount">0</span>
-                </div>
-                <div class="stat-row">
-                    <span class="stat-label">生成报告</span>
-                    <span class="stat-value" id="reportCount">0</span>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Top Bar -->
-            <div class="top-bar">
-                <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
-                <div class="search-section">
-                    <div class="search-box">
-                        <span class="search-icon">🔍</span>
-                        <input type="text" id="searchInput" placeholder="输入话题搜索新闻，如：人工智能、芯片产业、气候变化...">
-                    </div>
-                    <button class="search-btn" id="searchBtn">
-                        <span>🚀</span>
-                        <span>搜索分析</span>
+        <!-- 对话内容区 -->
+        <div id="chatArea" class="flex-1 overflow-y-auto scrollbar p-6">
+            <!-- 欢迎页 -->
+            <div id="welcomePage" class="h-full flex flex-col items-center justify-center text-center">
+                <i class="fa fa-search text-5xl text-primary/40 mb-4"></i>
+                <h2 class="text-xl font-medium mb-2">新闻分析智能体</h2>
+                <p class="text-sub text-sm mb-6 max-w-md">输入任意新闻话题，自动聚合全网资讯并生成深度分析报告，支持多轮追问与多模型切换</p>
+                <div class="flex flex-wrap justify-center gap-2 max-w-lg">
+                    <button class="quick-topic px-3 py-1.5 bg-panel border border-border rounded-full text-xs text-sub hover:border-primary hover:text-primary transition">
+                        人工智能产业动态
+                    </button>
+                    <button class="quick-topic px-3 py-1.5 bg-panel border border-border rounded-full text-xs text-sub hover:border-primary hover:text-primary transition">
+                        新能源汽车市场趋势
+                    </button>
+                    <button class="quick-topic px-3 py-1.5 bg-panel border border-border rounded-full text-xs text-sub hover:border-primary hover:text-primary transition">
+                        半导体行业最新进展
+                    </button>
+                    <button class="quick-topic px-3 py-1.5 bg-panel border border-border rounded-full text-xs text-sub hover:border-primary hover:text-primary transition">
+                        全球宏观经济走势
                     </button>
                 </div>
-                <div class="time-filters">
-                    <button class="time-btn active" data-range="day">今天</button>
-                    <button class="time-btn" data-range="week">本周</button>
-                    <button class="time-btn" data-range="month">本月</button>
+            </div>
+        </div>
+
+        <!-- 底部输入区 -->
+        <div class="border-t border-border p-4 flex-shrink-0">
+            <div class="max-w-4xl mx-auto">
+                <!-- 快捷功能按钮 -->
+                <div id="actionBar" class="hidden mb-3 flex gap-2 flex-wrap">
+                    <button class="action-btn px-3 py-1 bg-panel border border-border rounded text-xs text-sub hover:border-primary hover:text-primary transition" data-type="summary">
+                        内容摘要
+                    </button>
+                    <button class="action-btn px-3 py-1 bg-panel border border-border rounded text-xs text-sub hover:border-primary hover:text-primary transition" data-type="keypoints">
+                        关键要点
+                    </button>
+                    <button class="action-btn px-3 py-1 bg-panel border border-border rounded text-xs text-sub hover:border-primary hover:text-primary transition" data-type="trend">
+                        趋势预测
+                    </button>
+                    <button class="action-btn px-3 py-1 bg-panel border border-border rounded text-xs text-sub hover:border-primary hover:text-primary transition" data-type="impact">
+                        影响评估
+                    </button>
+                    <button class="action-btn px-3 py-1 bg-panel border border-border rounded text-xs text-sub hover:border-primary hover:text-primary transition" data-type="risk">
+                        风险提示
+                    </button>
+                    <button class="action-btn px-3 py-1 bg-panel border border-border rounded text-xs text-sub hover:border-primary hover:text-primary transition" data-type="full">
+                        完整报告
+                    </button>
                 </div>
-                <button class="toggle-report-btn" id="toggleReportBtn">
-                    📄 <span>报告</span>
-                </button>
+
+                <!-- 输入框 -->
+                <div class="flex gap-3">
+                    <div class="flex-1 relative">
+                        <input type="text" id="searchInput" placeholder="输入新闻话题，例如：新能源汽车市场趋势" 
+                            class="w-full bg-panel border border-border rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-primary transition">
+                    </div>
+                    <button id="sendBtn" class="px-5 bg-primary hover:bg-blue-600 rounded-lg text-sm font-medium transition">
+                        <i class="fa fa-paper-plane-o mr-1"></i> 搜索并分析
+                    </button>
+                </div>
+                <p class="text-xs text-sub mt-2">支持豆包、通义千问、DeepSeek 大模型 · 新闻源可配置真实API</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 设置弹窗 -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden items-center justify-center">
+        <div class="bg-panel border border-border rounded-xl w-full max-w-lg mx-4 p-5">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="font-medium text-lg">系统设置</h3>
+                <button id="closeSettings" class="text-sub hover:text-text"><i class="fa fa-times"></i></button>
             </div>
 
-            <!-- Content Area -->
-            <div class="content-area">
-                <!-- Chat Panel -->
-                <div class="chat-panel">
-                    <div class="chat-messages" id="chatMessages">
-                        <div class="welcome-section" id="welcomeSection">
-                            <div class="welcome-icon">🌐</div>
-                            <h2 class="welcome-title">欢迎使用 NewsMind</h2>
-                            <p class="welcome-desc">
-                                我是您的 AI 新闻分析智能体，具备实时新闻搜索和深度分析能力。
-                                输入任意话题，我将为您搜索最新资讯并生成专业的分析报告。
-                            </p>
-                            <div class="quick-actions">
-                                <div class="quick-action" data-query="2024年人工智能最新突破">
-                                    <div class="qa-icon">🤖</div>
-                                    <div class="qa-title">AI 最新突破</div>
-                                    <div class="qa-desc">2024年人工智能领域重大进展</div>
-                                </div>
-                                <div class="quick-action" data-query="全球芯片产业格局变化">
-                                    <div class="qa-icon">💎</div>
-                                    <div class="qa-title">芯片产业格局</div>
-                                    <div class="qa-desc">全球半导体产业链最新动态</div>
-                                </div>
-                                <div class="quick-action" data-query="新能源汽车市场趋势">
-                                    <div class="qa-icon">🚗</div>
-                                    <div class="qa-title">新能源汽车</div>
-                                    <div class="qa-desc">电动汽车市场竞争与趋势分析</div>
-                                </div>
-                                <div class="quick-action" data-query="全球经济形势与政策走向">
-                                    <div class="qa-icon">📈</div>
-                                    <div class="qa-title">全球经济形势</div>
-                                    <div class="qa-desc">宏观经济政策与市场走向预测</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="chat-input-area">
-                        <div class="input-actions">
-                            <button class="input-action-btn" id="deepAnalysisBtn">🔬 深度分析</button>
-                            <button class="input-action-btn" id="trendBtn">📈 趋势预测</button>
-                            <button class="input-action-btn" id="compareBtn">⚖️ 对比分析</button>
-                            <button class="input-action-btn" id="summaryBtn">📝 生成摘要</button>
-                        </div>
-                        <div class="chat-input-wrapper">
-                            <textarea class="chat-input" id="chatInput" placeholder="输入您的问题，继续深入探讨..." rows="1"></textarea>
-                            <button class="send-btn" id="sendBtn" disabled>➤</button>
-                        </div>
-                    </div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm text-sub mb-1.5">默认大模型</label>
+                    <select id="settingModel" class="w-full bg-bg border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-primary">
+                        <option value="qwen">通义千问 (阿里云百炼)</option>
+                        <option value="doubao">豆包 (火山方舟)</option>
+                        <option value="deepseek">DeepSeek</option>
+                    </select>
                 </div>
 
-                <!-- Report Panel -->
-                <div class="report-panel hidden" id="reportPanel">
-                    <div class="report-header">
-                        <div class="report-title">📊 分析报告</div>
-                        <div class="report-actions">
-                            <button class="report-action-btn" id="copyReportBtn" title="复制报告">📋</button>
-                            <button class="report-action-btn" id="downloadReportBtn" title="下载报告">⬇️</button>
-                        </div>
-                    </div>
-                    <div class="report-content" id="reportContent">
-                        <div class="report-placeholder">
-                            <div class="report-placeholder-icon">📊</div>
-                            <div class="report-placeholder-text">搜索话题后将自动生成分析报告</div>
-                        </div>
-                    </div>
+                <div>
+                    <label class="block text-sm text-sub mb-1.5">API Key</label>
+                    <input type="password" id="settingApiKey" placeholder="sk-xxxxxxxx" 
+                        class="w-full bg-bg border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-primary">
+                    <p class="text-xs text-sub mt-1">对应所选模型服务商的API密钥，留空使用演示模式</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-sub mb-1.5">模型名称</label>
+                    <input type="text" id="settingModelName" value="qwen-plus" 
+                        class="w-full bg-bg border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-primary">
+                    <p class="text-xs text-sub mt-1">推荐：qwen-plus / doubao-pro-32k / deepseek-chat</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm text-sub mb-1.5">新闻源 API Key (聚合数据)</label>
+                    <input type="text" id="settingNewsKey" placeholder="留空使用模拟新闻数据" 
+                        class="w-full bg-bg border border-border rounded px-3 py-2 text-sm focus:outline-none focus:border-primary">
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" id="settingCors" checked class="rounded">
+                    <label for="settingCors" class="text-xs text-sub">启用 CORS 代理（纯前端运行必开）</label>
                 </div>
             </div>
-        </main>
+
+            <div class="mt-6 flex gap-3">
+                <button id="saveSettings" class="flex-1 py-2 bg-primary hover:bg-blue-600 rounded text-sm transition">保存设置</button>
+                <button id="testApiBtn" class="px-4 py-2 bg-bg border border-border rounded text-sm hover:border-border transition">测试连接</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // ===================== State Management =====================
-        const state = {
-            messages: [],
-            turnCount: 0,
-            newsCount: 0,
-            reportCount: 0,
-            currentTopic: '',
-            timeRange: 'day',
-            isProcessing: false,
-            reportVisible: false,
-            conversationHistory: []
+        // ========== 配置与状态 ==========
+        const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
+
+        // 三大模型端点配置（均兼容 OpenAI 格式）
+        const MODEL_ENDPOINTS = {
+            qwen: 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions',
+            doubao: 'https://ark.cn-beijing.volces.com/api/v3/chat/completions',
+            deepseek: 'https://api.deepseek.com/v1/chat/completions'
         };
 
-        // ===================== DOM References =====================
-        const dom = {
-            sidebar: document.getElementById('sidebar'),
-            mobileMenuBtn: document.getElementById('mobileMenuBtn'),
-            searchInput: document.getElementById('searchInput'),
-            searchBtn: document.getElementById('searchBtn'),
-            chatMessages: document.getElementById('chatMessages'),
-            welcomeSection: document.getElementById('welcomeSection'),
-            chatInput: document.getElementById('chatInput'),
-            sendBtn: document.getElementById('sendBtn'),
-            reportPanel: document.getElementById('reportPanel'),
-            reportContent: document.getElementById('reportContent'),
-            toggleReportBtn: document.getElementById('toggleReportBtn'),
-            turnCount: document.getElementById('turnCount'),
-            newsCount: document.getElementById('newsCount'),
-            reportCount: document.getElementById('reportCount'),
-            newChatBtn: document.getElementById('newChatBtn'),
-            deepAnalysisBtn: document.getElementById('deepAnalysisBtn'),
-            trendBtn: document.getElementById('trendBtn'),
-            compareBtn: document.getElementById('compareBtn'),
-            summaryBtn: document.getElementById('summaryBtn'),
-            copyReportBtn: document.getElementById('copyReportBtn'),
-            downloadReportBtn: document.getElementById('downloadReportBtn')
+        const MODEL_NAMES = {
+            qwen: '通义千问',
+            doubao: '豆包',
+            deepseek: 'DeepSeek'
         };
 
-        // ===================== Mock Data Generator =====================
-        function generateMockNews(topic) {
-            const newsData = {
-                default: [
-                    {
-                        source: '新华社',
-                        title: `${topic}领域迎来重大突破，专家称将改变行业格局`,
-                        time: '2小时前',
-                        tag: '重磅'
-                    },
-                    {
-                        source: '路透社',
-                        title: `全球${topic}峰会召开，多国达成合作共识`,
-                        time: '4小时前',
-                        tag: '国际'
-                    },
-                    {
-                        source: '第一财经',
-                        title: `${topic}产业链深度报告：市场规模突破万亿`,
-                        time: '6小时前',
-                        tag: '产业'
-                    },
-                    {
-                        source: 'Nature',
-                        title: `最新研究揭示${topic}技术的关键瓶颈与突破路径`,
-                        time: '8小时前',
-                        tag: '学术'
-                    },
-                    {
-                        source: '财新网',
-                        title: `政策利好频出，${topic}板块迎来投资热潮`,
-                        time: '10小时前',
-                        tag: '投资'
-                    }
-                ]
+        let state = {
+            topic: '',
+            newsList: [],
+            report: '',
+            config: {
+                model: 'qwen',
+                apiKey: '',
+                modelName: 'qwen-plus',
+                newsKey: '',
+                cors: true
+            }
+        };
+
+        // ========== DOM 元素 ==========
+        const chatArea = document.getElementById('chatArea');
+        const welcomePage = document.getElementById('welcomePage');
+        const searchInput = document.getElementById('searchInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const actionBar = document.getElementById('actionBar');
+        const modelSelector = document.getElementById('modelSelector');
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsModal = document.getElementById('settingsModal');
+        const closeSettings = document.getElementById('closeSettings');
+        const saveSettings = document.getElementById('saveSettings');
+        const exportBtn = document.getElementById('exportBtn');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const currentModelName = document.getElementById('currentModelName');
+        const topicDisplay = document.getElementById('topicDisplay');
+
+        // ========== 初始化 ==========
+        function init() {
+            loadConfig();
+            bindEvents();
+            updateModelDisplay();
+        }
+
+        function bindEvents() {
+            // 发送搜索
+            sendBtn.addEventListener('click', () => handleSearch(searchInput.value));
+            searchInput.addEventListener('keydown', e => e.key === 'Enter' && handleSearch(searchInput.value));
+
+            // 快捷话题
+            document.querySelectorAll('.quick-topic').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    searchInput.value = btn.textContent.trim();
+                    handleSearch(btn.textContent.trim());
+                });
+            });
+
+            // 模型切换
+            modelSelector.addEventListener('change', () => {
+                state.config.model = modelSelector.value;
+                updateModelDisplay();
+                // 切换模型时自动更新默认模型名
+                const defaults = { qwen: 'qwen-plus', doubao: 'doubao-pro-32k', deepseek: 'deepseek-chat' };
+                document.getElementById('settingModelName').value = defaults[state.config.model];
+                state.config.modelName = defaults[state.config.model];
+            });
+
+            // 功能按钮
+            document.querySelectorAll('.action-btn').forEach(btn => {
+                btn.addEventListener('click', () => handleAnalysis(btn.dataset.type));
+            });
+
+            // 设置弹窗
+            settingsBtn.addEventListener('click', openSettings);
+            closeSettings.addEventListener('click', () => {
+                settingsModal.classList.add('hidden');
+                settingsModal.classList.remove('flex');
+            });
+            settingsModal.addEventListener('click', e => {
+                if (e.target === settingsModal) {
+                    settingsModal.classList.add('hidden');
+                    settingsModal.classList.remove('flex');
+                }
+            });
+
+            // 保存设置
+            saveSettings.addEventListener('click', saveConfig);
+
+            // 测试API
+            document.getElementById('testApiBtn').addEventListener('click', testApi);
+
+            // 导出
+            exportBtn.addEventListener('click', exportReport);
+
+            // 新建对话
+            newChatBtn.addEventListener('click', resetChat);
+        }
+
+        // ========== 核心：搜索并分析 ==========
+        async function handleSearch(topic) {
+            if (!topic.trim()) return;
+            
+            state.topic = topic.trim();
+            topicDisplay.textContent = '当前话题：' + state.topic;
+            welcomePage.style.display = 'none';
+            searchInput.value = '';
+
+            // 用户消息
+            appendMessage('user', topic);
+
+            // AI加载
+            const loadingId = appendLoading('正在搜索最新新闻...');
+
+            try {
+                // 1. 获取新闻
+                const news = await fetchNews(topic);
+                state.newsList = news;
+
+                // 更新加载消息为新闻列表
+                updateLoadingToNews(loadingId, news);
+
+                // 2. 生成完整分析报告
+                const reportLoadingId = appendLoading('正在生成深度分析报告...');
+
+                const report = await generateReport(topic, news);
+                state.report = report;
+
+                updateLoadingToText(reportLoadingId, report);
+
+                // 显示功能按钮栏
+                actionBar.classList.remove('hidden');
+
+            } catch (err) {
+                appendMessage('ai', '执行失败：' + err.message);
+            }
+        }
+
+        // ========== 获取新闻 ==========
+        async function fetchNews(topic) {
+            // 无配置则返回模拟数据
+            if (!state.config.newsKey) {
+                await delay(800);
+                return mockNews(topic);
+            }
+
+            try {
+                let url = `https://v.juhe.cn/toutiao/index?key=${state.config.newsKey}&is_filter=1`;
+                if (state.config.cors) url = CORS_PROXY + encodeURIComponent(url);
+
+                const res = await fetch(url);
+                const data = await res.json();
+                if (data.error_code !== 0) throw new Error(data.reason || '新闻接口错误');
+
+                const list = data.result?.data || [];
+                // 关键词匹配过滤
+                const filtered = list.filter(item => 
+                    topic.split(/\s+/).some(k => item.title.includes(k))
+                );
+
+                const result = (filtered.length ? filtered : list.slice(0, 6)).map((item, i) => ({
+                    id: Date.now() + i,
+                    title: item.title,
+                    source: item.author_name || '未知来源',
+                    time: item.date || '刚刚',
+                    url: item.url,
+                    category: item.category
+                }));
+
+                return result.slice(0, 6);
+
+            } catch (e) {
+                console.warn('新闻接口失败，使用模拟数据', e);
+                return mockNews(topic);
+            }
+        }
+
+        function mockNews(topic) {
+            const sources = ['新华社', '第一财经', '36氪', '财新网', '界面新闻', '路透社'];
+            return Array.from({ length: 5 }, (_, i) => ({
+                id: i + 1,
+                title: `${topic}迎来新进展，行业格局或将重塑`,
+                source: sources[i % sources.length],
+                time: `${(i+1)*2}小时前`,
+                url: '#'
+            }));
+        }
+
+        // ========== 调用大模型生成报告 ==========
+        async function generateReport(topic, news) {
+            const newsText = news.map((n, i) => `${i+1}. 《${n.title}》 - ${n.source}`).join('\n');
+
+            const prompt = `你是专业新闻分析师。基于以下关于"${topic}"的新闻，生成一份结构化分析报告。
+
+【新闻列表】
+${newsText}
+
+请输出以下内容（使用Markdown格式）：
+## 一、内容概要
+一段话总结整体情况
+
+## 二、关键要点
+提炼5个核心要点，每条一句话
+
+## 三、趋势研判
+分析未来发展趋势，3-4条
+
+## 四、影响评估
+从行业、市场、政策三个维度说明影响
+
+## 五、风险提示
+列出2-3个潜在风险
+
+要求：客观专业，结构清晰，不超过800字。`;
+
+            if (state.config.apiKey) {
+                return callLLM(prompt);
+            } else {
+                await delay(1200);
+                return mockReport(topic, news);
+            }
+        }
+
+        // 单项分析
+        async function handleAnalysis(type) {
+            if (!state.newsList.length) return;
+
+            const prompts = {
+                summary: '请生成200字以内的内容摘要',
+                keypoints: '请提炼5个关键要点，每条一句话',
+                trend: '请预测未来3-6个月的发展趋势',
+                impact: '请从行业、市场、政策三个维度评估影响',
+                risk: '请指出主要风险与不确定性',
+                full: '请重新生成一份完整的深度分析报告'
             };
-            return newsData.default;
+
+            const basePrompt = `基于以下关于"${state.topic}"的新闻：\n${state.newsList.map(n=>n.title).join('\n')}\n\n`;
+            const fullPrompt = basePrompt + prompts[type];
+
+            appendMessage('user', `执行：${prompts[type].slice(0,20)}...`);
+            const id = appendLoading('分析中...');
+
+            try {
+                const result = state.config.apiKey 
+                    ? await callLLM(fullPrompt) 
+                    : (await delay(800), `【${prompts[type].slice(0,10)}结果】\n\n基于当前${state.newsList.length}条新闻综合分析，${state.topic}领域整体向好，政策与市场形成共振。建议重点关注技术突破、政策落地和龙头企业动向三大核心变量。`);
+                
+                updateLoadingToText(id, result);
+            } catch (e) {
+                updateLoadingToText(id, '分析失败：' + e.message);
+            }
         }
 
-        function generateAnalysisReport(topic, timeRange) {
-            const rangeText = { day: '今日', week: '本周', month: '本月' };
-            return `# ${topic} · 新闻分析报告
+        // ========== 通用大模型调用 ==========
+        async function callLLM(prompt) {
+            let url = MODEL_ENDPOINTS[state.config.model];
+            if (state.config.cors) url = CORS_PROXY + encodeURIComponent(url);
 
-## 📋 概要
-${rangeText[timeRange]}共采集到与「${topic}」相关的高质量新闻 **${Math.floor(Math.random() * 50 + 30)}** 篇，覆盖 **${Math.floor(Math.random() * 8 + 5)}** 个权威信息源。以下是多维度深度分析结果。
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${state.config.apiKey}`
+                },
+                body: JSON.stringify({
+                    model: state.config.modelName,
+                    messages: [
+                        { role: 'system', content: '你是资深新闻分析师，输出客观专业、结构清晰。' },
+                        { role: 'user', content: prompt }
+                    ],
+                    temperature: 0.6
+                })
+            });
 
----
-
-## 🔍 关键事件
-
-| 序号 | 事件 | 影响力 | 时间 |
-|------|------|--------|------|
-| 1 | ${topic}核心技术取得突破性进展 | ⭐⭐⭐⭐⭐ | 2天前 |
-| 2 | 多国联合发布${topic}发展白皮书 | ⭐⭐⭐⭐ | 3天前 |
-| 3 | 头部企业宣布百亿级${topic}投资计划 | ⭐⭐⭐⭐ | 5天前 |
-| 4 | ${topic}国际标准制定进入关键阶段 | ⭐⭐⭐ | 1周前 |
-
----
-
-## 📊 舆情分析
-
-**整体情绪分布：**
-- 🟢 正面报道：62%（技术突破、政策支持、市场增长）
-- 🟡 中性报道：25%（行业动态、数据统计、专家评论）
-- 🔴 负面报道：13%（监管挑战、伦理争议、泡沫担忧）
-
----
-
-## 🔬 背景分析
-
-${topic}领域近年来发展迅猛，主要受到以下因素驱动：
-
-1. **技术成熟度提升** — 底层技术经过多年积累，已进入商业化爆发期
-2. **政策环境优化** — 各国政府相继出台扶持政策，营造良好发展环境
-3. **市场需求旺盛** — 企业和消费者对${topic}相关产品的需求持续增长
-4. **资本大量涌入** — 风投和产业资本持续加注，加速技术迭代
-
----
-
-## 📈 影响评估
-
-**短期影响（1-3个月）：**
-- 相关概念股可能持续走强
-- 行业竞争加剧，并购重组频率提升
-- 人才争夺进入白热化阶段
-
-**中期影响（3-12个月）：**
-- 产业链上下游加速整合
-- 应用场景快速拓展至更多垂直领域
-- 监管框架逐步完善
-
-**长期影响（1-3年）：**
-- ${topic}将成为基础设施级技术
-- 催生全新的商业模式和产业生态
-- 对传统行业产生深远颠覆性影响
-
----
-
-## 🎯 趋势预测
-
-基于当前数据分析，未来${topic}领域将呈现以下趋势：
-
-> "我们正在见证${topic}从量变到质变的关键转折点。" —— 行业分析师
-
-1. **技术融合加速** — 与AI、区块链等技术深度融合
-2. **应用场景下沉** — 从一线城市向更广泛市场渗透
-3. **国际合作深化** — 跨国技术标准和治理框架趋于统一
-4. **可持续发展** — 绿色低碳成为核心发展方向
-
----
-
-## 💡 核心洞察
-
-- ${topic}正处于 **Gartner曲线的攀升期**，预计2-3年内达到生产力高峰
-- 建议重点关注 **技术落地能力** 和 **商业化路径** 两个核心维度
-- 风险因素主要包括：监管不确定性、技术路线分歧、市场竞争加剧
-
----
-
-*报告生成时间：${new Date().toLocaleString('zh-CN')}*
-*数据来源：多源新闻聚合分析*
-*分析引擎：NewsMind AI v2.0*`;
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const data = await res.json();
+            return data.choices[0].message.content;
         }
 
-        function generateAgentResponse(topic, type) {
-            if (type === 'search') {
-                return generateSearchResponse(topic);
-            } else if (type === 'deep') {
-                return generateDeepAnalysis(topic);
-            } else if (type === 'trend') {
-                return generateTrendAnalysis(topic);
-            } else if (type === 'compare') {
-                return generateComparison(topic);
-            } else if (type === 'summary') {
-                return generateSummary(topic);
+        // ========== 消息渲染 ==========
+        function appendMessage(role, content) {
+            const wrap = document.createElement('div');
+            wrap.className = `max-w-3xl mx-auto mb-4 fade-in ${role === 'user' ? 'text-right' : ''}`;
+            
+            if (role === 'user') {
+                wrap.innerHTML = `
+                    <div class="inline-block bg-primary/20 border border-primary/30 rounded-2xl rounded-tr-sm px-4 py-2.5 text-sm max-w-[80%] text-left">
+                        ${content}
+                    </div>
+                `;
             } else {
-                return generateFollowUp(topic);
+                wrap.innerHTML = `
+                    <div class="flex items-start gap-3">
+                        <div class="w-8 h-8 rounded bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <i class="fa fa-robot text-primary text-sm"></i>
+                        </div>
+                        <div class="bg-panel border border-border rounded-2xl rounded-tl-sm px-4 py-3 text-sm max-w-[85%] whitespace-pre-wrap leading-relaxed">
+                            ${content}
+                        </div>
+                    </div>
+                `;
             }
+
+            chatArea.appendChild(wrap);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            return wrap;
         }
 
-        function generateSearchResponse(topic) {
-            const news = generateMockNews(topic);
-            let html = `<h3>📰 「${topic}」实时新闻搜索结果</h3>`;
-            html += `<p>已为您搜索到 <strong>${news.length}</strong> 条最新相关资讯：</p>`;
-            html += '<div class="news-card-list">';
-            news.forEach(n => {
-                html += `
-                    <div class="news-card">
-                        <div class="news-card-source">${n.source}</div>
-                        <div class="news-card-title">${n.title}</div>
-                        <div class="news-card-meta">
-                            <span>🕐 ${n.time}</span>
-                            <span class="news-card-tag">${n.tag}</span>
-                        </div>
-                    </div>`;
-            });
-            html += '</div>';
-            html += `<div class="keyword-tags">
-                <span class="keyword-tag" data-topic="${topic}技术">${topic}技术</span>
-                <span class="keyword-tag" data-topic="${topic}政策">${topic}政策</span>
-                <span class="keyword-tag" data-topic="${topic}投资">${topic}投资</span>
-                <span class="keyword-tag" data-topic="${topic}人才">${topic}人才</span>
-            </div>`;
-            html += `<p style="margin-top: 12px;">💡 您可以点击关键词进一步探索，或选择 <strong>深度分析</strong> 获取完整报告。</p>`;
-            return html;
-        }
-
-        function generateDeepAnalysis(topic) {
-            return `
-                <h3>🔬 「${topic}」深度分析报告</h3>
-                <div class="analysis-section">
-                    <h4>🏛️ 背景溯源</h4>
-                    <p>${topic}的发展历程可追溯到十年前。经过长期技术积累和市场培育，该领域已从概念验证阶段迈入规模化应用阶段。关键里程碑事件包括：</p>
-                    <ul>
-                        <li><strong>2018年</strong> — 基础理论框架确立，首批原型系统问世</li>
-                        <li><strong>2020年</strong> — 行业标准初步形成，头部企业入局</li>
-                        <li><strong>2022年</strong> — 技术突破带来成本大幅下降，商业化加速</li>
-                        <li><strong>2024年</strong> — 生态体系初步建成，进入爆发增长期</li>
-                    </ul>
-                </div>
-                <div class="analysis-section">
-                    <h4>💥 影响评估</h4>
-                    <p><strong>经济影响：</strong>预计${topic}将在未来5年内创造超过 <strong>2万亿美元</strong> 的市场价值，带动上下游产业链全面升级。</p>
-                    <p><strong>社会影响：</strong>将深刻改变就业结构、教育模式和生活方式，预计影响全球 <strong>40%</strong> 的工作岗位。</p>
-                    <p><strong>地缘影响：</strong>各国在${topic}领域的竞争日趋激烈，技术主权成为国家战略核心议题。</p>
-                </div>
-                <div class="analysis-section">
-                    <h4>📈 趋势预测</h4>
-                    <p>基于多维数据模型分析：</p>
-                    <ul>
-                        <li>📊 短期（3个月）：行业热度指数 <strong>87/100</strong>，处于高位运行</li>
-                        <li>📊 中期（1年）：技术成熟度预计提升 <strong>35%</strong></li>
-                        <li>📊 长期（3年）：市场规模年复合增长率预计达 <strong>42%</strong></li>
-                    </ul>
-                </div>
-                <blockquote>核心观点：${topic}正从技术驱动阶段转向应用驱动阶段，落地能力将成为下一阶段竞争的关键分水岭。</blockquote>
-            `;
-        }
-
-        function generateTrendAnalysis(topic) {
-            return `
-                <h3>📈 「${topic}」趋势预测分析</h3>
-                <div class="analysis-section">
-                    <h4>📊 热度趋势</h4>
-                    <div class="sentiment-bar">
-                        <div class="sentiment-segment sentiment-positive" style="width: 72%"></div>
-                        <div class="sentiment-segment sentiment-neutral" style="width: 18%"></div>
-                        <div class="sentiment-segment sentiment-negative" style="width: 10%"></div>
+        function appendLoading(text) {
+            const id = 'load-' + Date.now();
+            const wrap = document.createElement('div');
+            wrap.id = id;
+            wrap.className = 'max-w-3xl mx-auto mb-4 fade-in';
+            wrap.innerHTML = `
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i class="fa fa-robot text-primary text-sm"></i>
                     </div>
-                    <div class="sentiment-labels">
-                        <span>🟢 上升趋势 72%</span>
-                        <span>🟡 平稳 18%</span>
-                        <span>🔴 下行 10%</span>
-                    </div>
-                </div>
-                <div class="analysis-section">
-                    <h4>🎯 关键预测</h4>
-                    <table>
-                        <tr>
-                            <th>时间窗口</th>
-                            <th>预测事件</th>
-                            <th>置信度</th>
-                        </tr>
-                        <tr>
-                            <td>Q2 2025</td>
-                            <td>${topic}行业标准 2.0 发布</td>
-                            <td>85%</td>
-                        </tr>
-                        <tr>
-                            <td>Q3 2025</td>
-                            <td>首批大规模商用产品上市</td>
-                            <td>72%</td>
-                        </tr>
-                        <tr>
-                            <td>2025年末</td>
-                            <td>市场规模突破千亿大关</td>
-                            <td>68%</td>
-                        </tr>
-                        <tr>
-                            <td>2026年</td>
-                            <td>行业进入整合期</td>
-                            <td>61%</td>
-                        </tr>
-                    </table>
-                </div>
-                <p>💡 <strong>投资建议：</strong>当前处于布局窗口期，建议重点关注具有核心技术壁垒和明确商业化路径的标的。</p>
-            `;
-        }
-
-        function generateComparison(topic) {
-            return `
-                <h3>⚖️ 「${topic}」对比分析</h3>
-                <div class="analysis-section">
-                    <h4>🌍 全球主要经济体的${topic}布局对比</h4>
-                    <table>
-                        <tr>
-                            <th>维度</th>
-                            <th>🇨🇳 中国</th>
-                            <th>🇺🇸 美国</th>
-                            <th>🇪🇺 欧盟</th>
-                        </tr>
-                        <tr>
-                            <td>政策支持力度</td>
-                            <td>⭐⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐⭐</td>
-                        </tr>
-                        <tr>
-                            <td>技术研发水平</td>
-                            <td>⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐</td>
-                        </tr>
-                        <tr>
-                            <td>产业化程度</td>
-                            <td>⭐⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐</td>
-                        </tr>
-                        <tr>
-                            <td>市场规模</td>
-                            <td>⭐⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐</td>
-                        </tr>
-                        <tr>
-                            <td>人才储备</td>
-                            <td>⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐⭐⭐</td>
-                            <td>⭐⭐⭐</td>
-                        </tr>
-                    </table>
-                </div>
-                <p><strong>分析结论：</strong>中国在${topic}的产业化和市场规模方面具有显著优势，美国在基础研发方面领先，欧盟则侧重于监管框架和标准制定。</p>
-            `;
-        }
-
-        function generateSummary(topic) {
-            return `
-                <h3>📝 「${topic}」智能摘要</h3>
-                <div class="analysis-section">
-                    <h4>🔑 核心要点</h4>
-                    <ol>
-                        <li><strong>技术进展：</strong>${topic}核心技术取得重要突破，性能指标提升超 3 倍</li>
-                        <li><strong>市场动态：</strong>全球市场规模预计年底突破 5000 亿美元</li>
-                        <li><strong>政策信号：</strong>多国加大政策支持力度，监管框架加速完善</li>
-                        <li><strong>企业布局：</strong>头部科技公司纷纷加码，创业生态持续繁荣</li>
-                        <li><strong>社会反响：</strong>公众关注度创历史新高，应用场景持续拓展</li>
-                    </ol>
-                </div>
-                <div class="analysis-section">
-                    <h4>📌 一句话总结</h4>
-                    <p><strong>${topic}</strong>正处于从技术验证到规模化应用的关键转型期，多方力量共同推动下，预计将在未来 2-3 年内实现爆发式增长。</p>
-                </div>
-            `;
-        }
-
-        function generateFollowUp(input) {
-            const responses = [
-                `<h3>🤔 深入探讨</h3>
-                <p>关于您提到的 <strong>"${input}"</strong>，结合之前的分析上下文，我有以下补充观点：</p>
-                <div class="analysis-section">
-                    <h4>💡 延伸分析</h4>
-                    <p>基于我们之前讨论的内容，这个话题可以从以下几个角度深入理解：</p>
-                    <ul>
-                        <li><strong>第一层面：</strong>从宏观视角来看，这反映了当前全球产业格局的深层变化</li>
-                        <li><strong>第二层面：</strong>微观层面，企业和个体的应对策略将决定其在这一浪潮中的位置</li>
-                        <li><strong>第三层面：</strong>从时间维度看，这一趋势将在未来 3-5 年内加速演进</li>
-                    </ul>
-                </div>
-                <p>您想进一步了解哪个方面？我可以继续深入分析 🔍</p>`,
-
-                `<h3>📊 补充分析</h3>
-                <p>针对 <strong>"${input}"</strong>，基于对话记忆中的上下文信息，我为您补充以下分析：</p>
-                <div class="analysis-section">
-                    <h4>🔗 关联分析</h4>
-                    <p>将此话题与我们之前讨论的内容关联起来看：</p>
-                    <ol>
-                        <li>两者存在显著的 <strong>协同效应</strong>，互相促进发展</li>
-                        <li>在资源分配上可能存在一定的 <strong>竞争关系</strong></li>
-                        <li>长期来看，<strong>融合趋势</strong> 将日益明显</li>
-                    </ol>
-                </div>
-                <blockquote>建议采用系统性的分析框架，将相关因素纳入统一模型进行综合评估。</blockquote>
-                <p>需要我生成一份完整的对比报告吗？ 📄</p>`
-            ];
-            return responses[Math.floor(Math.random() * responses.length)];
-        }
-
-        // ===================== Rendering Functions =====================
-        function renderMarkdownReport(md) {
-            let html = md;
-            // Headers
-            html = html.replace(/^### (.+)$/gm, '<div class="md-h3">$1</div>');
-            html = html.replace(/^## (.+)$/gm, '<div class="md-h2">$1</div>');
-            html = html.replace(/^# (.+)$/gm, '<div class="md-h1">$1</div>');
-            // Bold
-            html = html.replace(/\*\*(.+?)\*\*/g, '<span class="md-bold">$1</span>');
-            // Inline code
-            html = html.replace(/`(.+?)`/g, '<span class="md-code">$1</span>');
-            // Horizontal rules
-            html = html.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">');
-            // Blockquotes
-            html = html.replace(/^> (.+)$/gm, '<div style="border-left:3px solid var(--primary);padding-left:10px;margin:8px 0;color:var(--text-muted);font-style:italic;">$1</div>');
-            // Lists
-            html = html.replace(/^- (.+)$/gm, '<div style="padding-left:12px;margin:2px 0;">• $1</div>');
-            html = html.replace(/^(\d+)\. (.+)$/gm, '<div style="padding-left:12px;margin:2px 0;">$1. $2</div>');
-            // Tables (simple)
-            html = html.replace(/^\|(.+)\|$/gm, function(match) {
-                const cells = match.split('|').filter(c => c.trim());
-                if (cells.every(c => /^[\s-]+$/.test(c))) return '';
-                const isHeader = false;
-                const tag = isHeader ? 'th' : 'td';
-                let row = '<tr>';
-                cells.forEach(c => {
-                    row += `<${tag} style="padding:6px 10px;border:1px solid var(--border);font-size:12px;">${c.trim()}</${tag}>`;
-                });
-                row += '</tr>';
-                return row;
-            });
-            // Wrap consecutive <tr> in tables
-            html = html.replace(/(<tr>[\s\S]*?<\/tr>\s*)+/g, function(match) {
-                return '<table style="width:100%;border-collapse:collapse;margin:8px 0;">' + match + '</table>';
-            });
-            // Newlines
-            html = html.replace(/\n/g, '<br>');
-            // Clean up multiple <br>
-            html = html.replace(/(<br>\s*){3,}/g, '<br><br>');
-
-            return `<div class="md-report">${html}</div>`;
-        }
-
-        function addMessage(role, content, isHTML) {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${role}`;
-
-            const avatar = role === 'user' ? '👤' : '🧠';
-            const name = role === 'user' ? '您' : 'NewsMind';
-            const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
-
-            msgDiv.innerHTML = `
-                <div class="message-avatar">${avatar}</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="message-name">${name}</span>
-                        <span class="message-time">${time}</span>
-                        ${role === 'agent' ? '<div class="memory-indicator">🔗 对话记忆已激活</div>' : ''}
-                    </div>
-                    <div class="message-body">${isHTML ? content : `<p>${content}</p>`}</div>
-                </div>
-            `;
-
-            dom.chatMessages.appendChild(msgDiv);
-            dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
-
-            state.messages.push({ role, content, time });
-            return msgDiv;
-        }
-
-        function addTypingIndicator() {
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'message agent';
-            msgDiv.id = 'typingIndicator';
-            msgDiv.innerHTML = `
-                <div class="message-avatar">🧠</div>
-                <div class="message-content">
-                    <div class="message-header">
-                        <span class="message-name">NewsMind</span>
-                        <span class="message-time">分析中...</span>
-                    </div>
-                    <div class="message-body">
-                        <div class="progress-steps">
-                            <div class="progress-step active" id="step1">
-                                <div class="step-icon">🔄</div>
-                                <span>正在搜索相关新闻...</span>
+                    <div class="bg-panel border border-border rounded-2xl rounded-tl-sm px-4 py-3 text-sm">
+                        <div class="flex items-center gap-2 text-sub">
+                            <div class="flex gap-1">
+                                <span class="typing-dot w-1.5 h-1.5 bg-sub rounded-full"></span>
+                                <span class="typing-dot w-1.5 h-1.5 bg-sub rounded-full"></span>
+                                <span class="typing-dot w-1.5 h-1.5 bg-sub rounded-full"></span>
                             </div>
-                            <div class="progress-step" id="step2">
-                                <div class="step-icon">⏳</div>
-                                <span>AI 模型深度分析中...</span>
-                            </div>
-                            <div class="progress-step" id="step3">
-                                <div class="step-icon">⏳</div>
-                                <span>生成结构化报告...</span>
-                            </div>
-                        </div>
-                        <div class="typing-indicator">
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
-                            <div class="typing-dot"></div>
+                            <span>${text}</span>
                         </div>
                     </div>
                 </div>
             `;
-            dom.chatMessages.appendChild(msgDiv);
-            dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
-
-            // Animate steps
-            setTimeout(() => {
-                const s1 = document.getElementById('step1');
-                const s2 = document.getElementById('step2');
-                if (s1) { s1.className = 'progress-step completed'; s1.querySelector('.step-icon').textContent = '✅'; s1.querySelector('span:last-child').textContent = '新闻搜索完成'; }
-                if (s2) { s2.className = 'progress-step active'; s2.querySelector('.step-icon').textContent = '🔄'; }
-            }, 800);
-
-            setTimeout(() => {
-                const s2 = document.getElementById('step2');
-                const s3 = document.getElementById('step3');
-                if (s2) { s2.className = 'progress-step completed'; s2.querySelector('.step-icon').textContent = '✅'; s2.querySelector('span:last-child').textContent = '深度分析完成'; }
-                if (s3) { s3.className = 'progress-step active'; s3.querySelector('.step-icon').textContent = '🔄'; }
-            }, 1600);
-
-            setTimeout(() => {
-                const s3 = document.getElementById('step3');
-                if (s3) { s3.className = 'progress-step completed'; s3.querySelector('.step-icon').textContent = '✅'; s3.querySelector('span:last-child').textContent = '报告生成完毕'; }
-            }, 2400);
+            chatArea.appendChild(wrap);
+            chatArea.scrollTop = chatArea.scrollHeight;
+            return id;
         }
 
-        function removeTypingIndicator() {
-            const indicator = document.getElementById('typingIndicator');
-            if (indicator) indicator.remove();
-        }
-
-        function updateReport(topic) {
-            const md = generateAnalysisReport(topic, state.timeRange);
-            dom.reportContent.innerHTML = renderMarkdownReport(md);
-            state.reportCount++;
-            updateStats();
-
-            if (!state.reportVisible) {
-                dom.reportPanel.classList.remove('hidden');
-                state.reportVisible = true;
-            }
-        }
-
-        function updateStats() {
-            dom.turnCount.textContent = state.turnCount;
-            dom.newsCount.textContent = state.newsCount;
-            dom.reportCount.textContent = state.reportCount;
-        }
-
-        // ===================== Core Actions =====================
-        function performSearch(topic, type) {
-            if (state.isProcessing || !topic.trim()) return;
-            state.isProcessing = true;
-            state.currentTopic = topic.trim();
-
-            // Hide welcome
-            if (dom.welcomeSection) {
-                dom.welcomeSection.style.display = 'none';
-            }
-
-            // Add user message
-            addMessage('user', topic);
-            state.turnCount++;
-
-            // Show typing
-            addTypingIndicator();
-
-            // Simulate processing delay
-            const delay = type === 'search' ? 3000 : 2500;
-            setTimeout(() => {
-                removeTypingIndicator();
-
-                const responseContent = generateAgentResponse(state.currentTopic, type || 'search');
-                addMessage('agent', responseContent, true);
-
-                if (type === 'search') {
-                    state.newsCount += 5;
-                    updateReport(state.currentTopic);
-                }
-
-                state.isProcessing = false;
-                updateStats();
-
-                // Bind keyword tag clicks
-                bindKeywordTags();
-            }, delay);
-        }
-
-        function bindKeywordTags() {
-            document.querySelectorAll('.keyword-tag').forEach(tag => {
-                tag.addEventListener('click', function() {
-                    const topic = this.getAttribute('data-topic');
-                    if (topic) {
-                        dom.searchInput.value = topic;
-                        performSearch(topic, 'search');
-                    }
-                });
-            });
-        }
-
-        function startNewChat() {
-            state.messages = [];
-            state.turnCount = 0;
-            state.newsCount = 0;
-            state.reportCount = 0;
-            state.currentTopic = '';
-            state.conversationHistory = [];
-
-            dom.chatMessages.innerHTML = '';
-            dom.welcomeSection.style.display = '';
-            dom.chatMessages.appendChild(dom.welcomeSection);
-
-            dom.reportContent.innerHTML = `
-                <div class="report-placeholder">
-                    <div class="report-placeholder-icon">📊</div>
-                    <div class="report-placeholder-text">搜索话题后将自动生成分析报告</div>
+        function updateLoadingToNews(id, news) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const box = el.querySelector('.bg-panel');
+            box.innerHTML = `
+                <p class="mb-2 font-medium">📰 已搜索到 ${news.length} 条相关新闻</p>
+                <div class="space-y-2">
+                    ${news.map(n => `
+                        <div class="border border-border rounded px-3 py-2 text-sm">
+                            <div class="font-medium mb-1">${n.title}</div>
+                            <div class="text-xs text-sub">${n.source} · ${n.time}</div>
+                        </div>
+                    `).join('')}
                 </div>
             `;
-
-            updateStats();
+            chatArea.scrollTop = chatArea.scrollHeight;
         }
 
-        // ===================== Event Bindings =====================
-        // Search button
-        dom.searchBtn.addEventListener('click', function() {
-            const query = dom.searchInput.value.trim();
-            if (query) {
-                performSearch(query, 'search');
-                dom.searchInput.value = '';
+        function updateLoadingToText(id, text) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const box = el.querySelector('.bg-panel');
+            box.innerHTML = `<div class="whitespace-pre-wrap leading-relaxed">${renderSimpleMarkdown(text)}</div>`;
+            chatArea.scrollTop = chatArea.scrollHeight;
+        }
+
+        function renderSimpleMarkdown(text) {
+            return text
+                .replace(/^## (.*$)/gm, '<div class="font-bold text-base mt-3 mb-1.5">$1</div>')
+                .replace(/^### (.*$)/gm, '<div class="font-medium mt-2 mb-1">$1</div>')
+                .replace(/^\d+\. /gm, '<span class="ml-1">• </span>')
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // ========== 设置相关 ==========
+        function openSettings() {
+            document.getElementById('settingModel').value = state.config.model;
+            document.getElementById('settingApiKey').value = state.config.apiKey;
+            document.getElementById('settingModelName').value = state.config.modelName;
+            document.getElementById('settingNewsKey').value = state.config.newsKey;
+            document.getElementById('settingCors').checked = state.config.cors;
+            settingsModal.classList.remove('hidden');
+            settingsModal.classList.add('flex');
+        }
+
+        function saveConfig() {
+            state.config.model = document.getElementById('settingModel').value;
+            state.config.apiKey = document.getElementById('settingApiKey').value;
+            state.config.modelName = document.getElementById('settingModelName').value;
+            state.config.newsKey = document.getElementById('settingNewsKey').value;
+            state.config.cors = document.getElementById('settingCors').checked;
+
+            localStorage.setItem('news_agent_config', JSON.stringify(state.config));
+            
+            modelSelector.value = state.config.model;
+            updateModelDisplay();
+            
+            settingsModal.classList.add('hidden');
+            settingsModal.classList.remove('flex');
+            toast('设置已保存');
+        }
+
+        function loadConfig() {
+            const saved = localStorage.getItem('news_agent_config');
+            if (saved) {
+                state.config = { ...state.config, ...JSON.parse(saved) };
+                modelSelector.value = state.config.model;
+                document.getElementById('settingModel').value = state.config.model;
+                document.getElementById('settingApiKey').value = state.config.apiKey;
+                document.getElementById('settingModelName').value = state.config.modelName;
+                document.getElementById('settingNewsKey').value = state.config.newsKey;
+                document.getElementById('settingCors').checked = state.config.cors;
             }
-        });
+        }
 
-        // Search input enter
-        dom.searchInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                dom.searchBtn.click();
-            }
-        });
+        function updateModelDisplay() {
+            currentModelName.textContent = '当前模型：' + MODEL_NAMES[state.config.model];
+        }
 
-        // Chat input
-        dom.chatInput.addEventListener('input', function() {
-            dom.sendBtn.disabled = !this.value.trim();
-            // Auto resize
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
+        async function testApi() {
+            if (!state.config.apiKey) return toast('请先填写 API Key');
+            toast('正在测试...');
+            try {
+                let url = MODEL_ENDPOINTS[state.config.model];
+                if (state.config.cors) url = CORS_PROXY + encodeURIComponent(url);
 
-        dom.chatInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                dom.sendBtn.click();
-            }
-        });
-
-        // Send button
-        dom.sendBtn.addEventListener('click', function() {
-            const input = dom.chatInput.value.trim();
-            if (input && !state.isProcessing) {
-                performSearch(input, 'followup');
-                dom.chatInput.value = '';
-                dom.chatInput.style.height = 'auto';
-                dom.sendBtn.disabled = true;
-            }
-        });
-
-        // Time filter buttons
-        document.querySelectorAll('.time-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                state.timeRange = this.getAttribute('data-range');
-
-                if (state.currentTopic) {
-                    updateReport(state.currentTopic);
-                }
-            });
-        });
-
-        // Quick actions
-        document.querySelectorAll('.quick-action').forEach(action => {
-            action.addEventListener('click', function() {
-                const query = this.getAttribute('data-query');
-                dom.searchInput.value = query;
-                performSearch(query, 'search');
-            });
-        });
-
-        // Toggle report panel
-        dom.toggleReportBtn.addEventListener('click', function() {
-            state.reportVisible = !state.reportVisible;
-            dom.reportPanel.classList.toggle('hidden', !state.reportVisible);
-        });
-
-        // New chat
-        dom.newChatBtn.addEventListener('click', startNewChat);
-
-        // Mobile menu
-        dom.mobileMenuBtn.addEventListener('click', function() {
-            dom.sidebar.classList.toggle('open');
-        });
-
-        // Input action buttons
-        dom.deepAnalysisBtn.addEventListener('click', function() {
-            if (state.currentTopic) {
-                performSearch('请对「' + state.currentTopic + '」进行深度分析', 'deep');
-            } else {
-                dom.chatInput.value = '';
-                dom.searchInput.focus();
-                dom.searchInput.setAttribute('placeholder', '请先搜索一个话题，再进行深度分析...');
-                setTimeout(() => {
-                    dom.searchInput.setAttribute('placeholder', '输入话题搜索新闻，如：人工智能、芯片产业、气候变化...');
-                }, 2000);
-            }
-        });
-
-        dom.trendBtn.addEventListener('click', function() {
-            if (state.currentTopic) {
-                performSearch('请预测「' + state.currentTopic + '」的未来趋势', 'trend');
-            }
-        });
-
-        dom.compareBtn.addEventListener('click', function() {
-            if (state.currentTopic) {
-                performSearch('请对「' + state.currentTopic + '」进行全球对比分析', 'compare');
-            }
-        });
-
-        dom.summaryBtn.addEventListener('click', function() {
-            if (state.currentTopic) {
-                performSearch('请为「' + state.currentTopic + '」生成智能摘要', 'summary');
-            }
-        });
-
-        // Copy report
-        dom.copyReportBtn.addEventListener('click', function() {
-            const reportText = dom.reportContent.innerText;
-            if (reportText && !reportText.includes('搜索话题后将自动生成')) {
-                navigator.clipboard.writeText(reportText).then(() => {
-                    this.textContent = '✅';
-                    setTimeout(() => { this.textContent = '📋'; }, 1500);
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${state.config.apiKey}`
+                    },
+                    body: JSON.stringify({
+                        model: state.config.modelName,
+                        messages: [{ role: 'user', content: 'hi' }],
+                        max_tokens: 5
+                    })
                 });
+                res.ok ? toast('连接成功 ✅') : toast(`连接失败 (${res.status})`);
+            } catch (e) {
+                toast('连接失败：' + e.message);
             }
-        });
+        }
 
-        // Download report
-        dom.downloadReportBtn.addEventListener('click', function() {
-            const reportText = dom.reportContent.innerText;
-            if (reportText && !reportText.includes('搜索话题后将自动生成')) {
-                const blob = new Blob([reportText], { type: 'text/markdown' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `NewsMind_Report_${state.currentTopic || 'analysis'}_${new Date().toISOString().slice(0,10)}.md`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-            }
-        });
+        // ========== 其他功能 ==========
+        function exportReport() {
+            if (!state.report) return toast('暂无报告可导出');
+            const blob = new Blob([state.report], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${state.topic}_新闻分析报告.md`;
+            a.click();
+            toast('报告已导出');
+        }
 
-        // Capability card clicks
-        document.querySelectorAll('.capability-card').forEach(card => {
-            card.addEventListener('click', function() {
-                document.querySelectorAll('.capability-card').forEach(c => c.classList.remove('active'));
-                this.classList.add('active');
-            });
-        });
+        function resetChat() {
+            chatArea.innerHTML = '';
+            chatArea.appendChild(welcomePage);
+            welcomePage.style.display = 'flex';
+            state.topic = '';
+            state.newsList = [];
+            state.report = '';
+            topicDisplay.textContent = '请输入话题开始搜索分析';
+            actionBar.classList.add('hidden');
+        }
 
-        // Close sidebar on mobile when clicking outside
-        document.addEventListener('click', function(e) {
-            if (window.innerWidth <= 960 && dom.sidebar.classList.contains('open')) {
-                if (!dom.sidebar.contains(e.target) && e.target !== dom.mobileMenuBtn) {
-                    dom.sidebar.classList.remove('open');
-                }
-            }
-        });
+        function toast(msg) {
+            const t = document.createElement('div');
+            t.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 px-4 py-2 bg-panel border border-border rounded text-sm z-50 fade-in';
+            t.textContent = msg;
+            document.body.appendChild(t);
+            setTimeout(() => t.remove(), 2000);
+        }
 
-        // Initialize
-        updateStats();
+        function delay(ms) {
+            return new Promise(r => setTimeout(r, ms));
+        }
+
+        function mockReport(topic, news) {
+            return `## 一、内容概要
+当前${topic}领域热度持续攀升，政策与技术双向驱动，行业进入加速发展期。综合${news.length}条权威资讯来看，市场预期整体向好，同时伴随结构性机会与风险。
+
+## 二、关键要点
+1. 顶层政策支持力度持续加大，行业发展方向进一步明确
+2. 头部企业产能与技术优势持续扩大，集中度提升
+3. 下游应用场景加速渗透，市场需求超预期
+4. 核心技术取得阶段性突破，国产化进程加快
+5. 国际市场竞争加剧，出海成为重要增长极
+
+## 三、趋势研判
+- 短期：市场情绪持续高涨，相关板块关注度维持高位
+- 中期：产能释放与需求兑现成为核心观察点
+- 长期：行业将从高速增长转向高质量发展
+
+## 四、影响评估
+行业层面：推动产业链整体升级，上下游协同效应增强
+市场层面：提振投资信心，估值体系重构
+政策层面：配套细则陆续落地，监管框架趋于完善
+
+## 五、风险提示
+1. 技术路线迭代带来的替代风险
+2. 产能扩张过快可能引发阶段性供需失衡
+3. 海外贸易与地缘政治不确定性`;
+        }
+
+        init();
     </script>
 </body>
 </html>
