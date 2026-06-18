@@ -4,935 +4,2091 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NewsAgent - 智能新闻分析引擎</title>
-    <!-- 引入 Markdown 渲染库 -->
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <title>NewsMind · 新闻分析智能体</title>
     <style>
         :root {
-            --bg-main: #f8f9fa;
-            --bg-card: #ffffff;
-            --bg-sidebar: #f1f3f5;
-            --text-primary: #212529;
-            --text-secondary: #6c757d;
-            --text-muted: #adb5bd;
-            --accent: #228be6;
-            --accent-light: #e7f5ff;
-            --border: #e9ecef;
-            --shadow: 0 2px 8px rgba(0,0,0,0.04);
-            --shadow-lg: 0 8px 24px rgba(0,0,0,0.08);
-            --radius: 12px;
+            --primary: #4F46E5;
+            --primary-light: #818CF8;
+            --primary-dark: #3730A3;
+            --accent: #06B6D4;
+            --accent-light: #67E8F9;
+            --bg-dark: #0F172A;
+            --bg-card: #1E293B;
+            --bg-card-hover: #273548;
+            --bg-input: #334155;
+            --text-primary: #F1F5F9;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+            --border: #334155;
+            --success: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+            --gradient-1: linear-gradient(135deg, #4F46E5, #06B6D4);
+            --gradient-2: linear-gradient(135deg, #7C3AED, #EC4899);
+            --shadow: 0 4px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 8px 40px rgba(0,0,0,0.4);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "PingFang SC", "Microsoft YaHei", sans-serif;
-            background-color: var(--bg-main);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            background: var(--bg-dark);
             color: var(--text-primary);
             height: 100vh;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
         }
 
-        /* Header */
-        .header {
-            height: 60px;
-            background: var(--bg-card);
-            border-bottom: 1px solid var(--border);
+        .app-container {
             display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 24px;
+            height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 300px;
+            background: linear-gradient(180deg, #1a1f3a 0%, #0F172A 100%);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
             flex-shrink: 0;
-            z-index: 10;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-header {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-weight: 700;
-            font-size: 18px;
-            color: var(--accent);
+            gap: 12px;
+            margin-bottom: 8px;
         }
 
         .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: var(--gradient-1);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+        }
+
+        .logo-text {
+            font-size: 22px;
+            font-weight: 700;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-left: 54px;
+            margin-top: -4px;
+        }
+
+        .agent-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            padding: 10px 14px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            border-radius: 10px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--success);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+        }
+
+        .status-text {
+            font-size: 13px;
+            color: var(--success);
+            font-weight: 500;
+        }
+
+        /* Capabilities Section */
+        .capabilities {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .capabilities::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .capabilities::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        .capability-card {
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .capability-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--primary-light);
+            transform: translateX(4px);
+        }
+
+        .capability-card.active {
+            border-color: var(--primary);
+            background: rgba(79, 70, 229, 0.1);
+        }
+
+        .cap-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 6px;
+        }
+
+        .cap-icon {
+            font-size: 18px;
             width: 32px;
             height: 32px;
-            background: var(--accent);
-            color: white;
-            border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 18px;
-        }
-
-        .header-actions {
-            display: flex;
-            gap: 12px;
-        }
-
-        .btn {
-            padding: 8px 16px;
+            background: rgba(79, 70, 229, 0.15);
             border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--bg-card);
-            color: var(--text-primary);
+        }
+
+        .cap-name {
             font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .btn:hover { background: var(--bg-sidebar); }
-        
-        .btn-primary {
-            background: var(--accent);
-            color: white;
-            border-color: var(--accent);
-        }
-        
-        .btn-primary:hover { background: #1c7ed6; }
-
-        /* Main Layout */
-        .main-container {
-            flex: 1;
-            display: flex;
-            overflow: hidden;
-            position: relative;
-        }
-
-        /* Welcome Screen */
-        .welcome-screen {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            transition: opacity 0.3s;
-        }
-
-        .welcome-screen.hidden {
-            display: none;
-        }
-
-        .welcome-title {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        .welcome-subtitle {
-            font-size: 16px;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
-            text-align: center;
-        }
-
-        .search-box {
-            width: 100%;
-            max-width: 680px;
-            background: var(--bg-card);
-            border: 2px solid var(--border);
-            border-radius: 16px;
-            padding: 16px 20px;
-            box-shadow: var(--shadow-lg);
-            transition: border-color 0.2s;
-        }
-
-        .search-box:focus-within {
-            border-color: var(--accent);
-        }
-
-        .search-input {
-            width: 100%;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            background: transparent;
+            font-weight: 600;
             color: var(--text-primary);
-            resize: none;
-            min-height: 24px;
-            max-height: 120px;
         }
 
-        .search-footer {
+        .cap-desc {
+            font-size: 12px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-left: 42px;
+        }
+
+        /* Stats */
+        .sidebar-stats {
+            padding: 16px 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .stat-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 12px;
+            padding: 6px 0;
         }
 
-        .search-hint {
+        .stat-label {
             font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .stat-value {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 28px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+        }
+
+        .search-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            max-width: 700px;
+        }
+
+        .search-box {
+            flex: 1;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .search-box input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+        }
+
+        .search-box input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 18px;
             color: var(--text-muted);
         }
 
         .search-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: var(--accent);
-            color: white;
+            padding: 12px 24px;
+            background: var(--gradient-1);
             border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(79, 70, 229, 0.4);
+        }
+
+        .search-btn:active {
+            transform: translateY(0);
+        }
+
+        .time-filters {
+            display: flex;
+            gap: 6px;
+            margin-left: 8px;
+        }
+
+        .time-btn {
+            padding: 8px 16px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .time-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--text-primary);
+        }
+
+        .time-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Chat Panel */
+        .chat-panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 28px;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-messages::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 6px;
+        }
+
+        .welcome-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .welcome-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .welcome-desc {
+            font-size: 15px;
+            color: var(--text-secondary);
+            max-width: 500px;
+            line-height: 1.7;
+            margin-bottom: 32px;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            max-width: 560px;
+            width: 100%;
+        }
+
+        .quick-action {
+            padding: 16px 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+
+        .quick-action:hover {
+            border-color: var(--primary-light);
+            background: var(--bg-card-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .qa-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .qa-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .qa-desc {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        /* Messages */
+        .message {
+            display: flex;
+            gap: 14px;
+            margin-bottom: 24px;
+            animation: messageIn 0.3s ease;
+        }
+
+        @keyframes messageIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 18px;
-            transition: transform 0.1s;
-        }
-
-        .search-btn:active { transform: scale(0.95); }
-        .search-btn:disabled { background: var(--text-muted); cursor: not-allowed; }
-
-        .quick-prompts {
-            display: flex;
-            gap: 12px;
-            margin-top: 24px;
-            flex-wrap: wrap;
-            justify-content: center;
-            max-width: 680px;
-        }
-
-        .prompt-chip {
-            padding: 8px 16px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 20px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .prompt-chip:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: var(--accent-light);
-        }
-
-        /* Result Screen */
-        .result-screen {
-            flex: 1;
-            display: none;
-            overflow: hidden;
-        }
-
-        .result-screen.active {
-            display: flex;
-        }
-
-        .result-main {
-            flex: 1;
-            overflow-y: auto;
-            padding: 32px 40px;
-        }
-
-        .result-query {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        /* Agent Steps */
-        .agent-steps {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 16px 20px;
-            margin-bottom: 24px;
-        }
-
-        .steps-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .steps-title {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-secondary);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .step-indicator {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            animation: pulse 1.5s infinite;
-        }
-
-        .step-indicator.done {
-            background: #40c057;
-            animation: none;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.5; transform: scale(1.2); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-
-        .steps-toggle {
-            font-size: 12px;
-            color: var(--text-muted);
-        }
-
-        .steps-list {
-            margin-top: 12px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-
-        .steps-list.collapsed {
-            max-height: 0;
-            margin-top: 0;
-        }
-
-        .step-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 13px;
-            color: var(--text-secondary);
-            opacity: 0.5;
-            transition: opacity 0.3s;
-        }
-
-        .step-item.active {
-            opacity: 1;
-            color: var(--text-primary);
-            font-weight: 500;
-        }
-
-        .step-item.done {
-            opacity: 0.8;
-        }
-
-        .step-icon {
-            width: 20px;
-            text-align: center;
-        }
-
-        /* Report Content */
-        .report-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 32px;
-            box-shadow: var(--shadow);
-            line-height: 1.8;
-            font-size: 15px;
-        }
-
-        .report-content h1, .report-content h2, .report-content h3 {
-            margin-top: 24px;
-            margin-bottom: 12px;
-            color: var(--text-primary);
-        }
-
-        .report-content h1 { font-size: 22px; border-bottom: 2px solid var(--accent); padding-bottom: 8px;}
-        .report-content h2 { font-size: 18px; color: var(--accent); }
-        .report-content h3 { font-size: 16px; }
-
-        .report-content p { margin-bottom: 16px; color: #343a40; }
-        
-        .report-content ul, .report-content ol {
-            margin-bottom: 16px;
-            padding-left: 24px;
-        }
-
-        .report-content li { margin-bottom: 8px; }
-
-        .report-content strong { color: var(--text-primary); }
-
-        .report-content blockquote {
-            border-left: 4px solid var(--accent);
-            background: var(--accent-light);
-            padding: 12px 16px;
-            margin: 16px 0;
-            border-radius: 0 8px 8px 0;
-            color: #1864ab;
-        }
-
-        .typing-cursor {
-            display: inline-block;
-            width: 2px;
-            height: 16px;
-            background: var(--accent);
-            margin-left: 2px;
-            animation: blink 1s step-end infinite;
-            vertical-align: text-bottom;
-        }
-
-        @keyframes blink {
-            50% { opacity: 0; }
-        }
-
-        /* Right Sidebar (Sources) */
-        .result-sidebar {
-            width: 300px;
-            background: var(--bg-card);
-            border-left: 1px solid var(--border);
-            padding: 24px;
-            overflow-y: auto;
             flex-shrink: 0;
         }
 
-        .sidebar-section {
-            margin-bottom: 24px;
+        .message.user .message-avatar {
+            background: var(--gradient-2);
         }
 
-        .sidebar-title {
-            font-size: 13px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
+        .message.agent .message-avatar {
+            background: var(--gradient-1);
         }
 
-        .source-card {
-            display: flex;
-            gap: 12px;
-            padding: 12px;
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-decoration: none;
-            color: inherit;
-        }
-
-        .source-card:hover {
-            border-color: var(--accent);
-            background: var(--accent-light);
-        }
-
-        .source-favicon {
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
-            background: var(--bg-sidebar);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            flex-shrink: 0;
-        }
-
-        .source-info {
+        .message-content {
             flex: 1;
             min-width: 0;
         }
 
-        .source-title {
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .source-url {
-            font-size: 11px;
-            color: var(--text-muted);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            backdrop-filter: blur(4px);
-        }
-
-        .modal-overlay.active {
+        .message-header {
             display: flex;
-        }
-
-        .modal {
-            background: var(--bg-card);
-            border-radius: 16px;
-            width: 90%;
-            max-width: 560px;
-            padding: 32px;
-            box-shadow: var(--shadow-lg);
-            position: relative;
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 16px;
-            right: 16px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
-
-        .modal h2 {
-            font-size: 20px;
+            align-items: center;
+            gap: 8px;
             margin-bottom: 8px;
         }
 
-        .modal p {
-            color: var(--text-secondary);
+        .message-name {
             font-size: 14px;
-            margin-bottom: 20px;
-            line-height: 1.6;
+            font-weight: 600;
         }
 
-        .deploy-options {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+        .message-time {
+            font-size: 12px;
+            color: var(--text-muted);
         }
 
-        .deploy-option {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 16px;
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
+        .message-body {
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-secondary);
         }
 
-        .deploy-option:hover {
-            border-color: var(--accent);
-            background: var(--accent-light);
+        .message-body p {
+            margin-bottom: 8px;
         }
 
-        .deploy-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            background: var(--bg-sidebar);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
+        .message-body h3 {
+            color: var(--text-primary);
+            font-size: 16px;
+            margin: 16px 0 8px;
         }
 
-        .deploy-text h4 {
-            font-size: 15px;
+        .message-body h4 {
+            color: var(--accent-light);
+            font-size: 14px;
+            margin: 12px 0 6px;
+        }
+
+        .message-body ul, .message-body ol {
+            padding-left: 20px;
+            margin-bottom: 8px;
+        }
+
+        .message-body li {
             margin-bottom: 4px;
         }
 
-        .deploy-text p {
+        .message-body code {
+            background: var(--bg-input);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 13px;
+        }
+
+        .message-body strong {
+            color: var(--text-primary);
+        }
+
+        .message-body blockquote {
+            border-left: 3px solid var(--primary);
+            padding-left: 14px;
+            margin: 12px 0;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .message-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+
+        .message-body table th,
+        .message-body table td {
+            padding: 10px 14px;
+            border: 1px solid var(--border);
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .message-body table th {
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* News Cards inside messages */
+        .news-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 12px 0;
+        }
+
+        .news-card {
+            padding: 14px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .news-card:hover {
+            border-color: var(--primary-light);
+            background: var(--bg-card-hover);
+        }
+
+        .news-card-source {
+            font-size: 11px;
+            color: var(--accent);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .news-card-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .news-card-meta {
+            display: flex;
+            gap: 12px;
             font-size: 12px;
             color: var(--text-muted);
-            margin: 0;
+        }
+
+        .news-card-tag {
+            padding: 2px 8px;
+            background: rgba(79, 70, 229, 0.15);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--primary-light);
+        }
+
+        /* Analysis sections */
+        .analysis-section {
+            margin: 12px 0;
+            padding: 16px;
+            background: rgba(6, 182, 212, 0.05);
+            border: 1px solid rgba(6, 182, 212, 0.15);
+            border-radius: 10px;
+        }
+
+        .analysis-section h4 {
+            color: var(--accent-light) !important;
+            margin-top: 0 !important;
+        }
+
+        .sentiment-bar {
+            display: flex;
+            gap: 4px;
+            margin: 8px 0;
+        }
+
+        .sentiment-segment {
+            height: 6px;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .sentiment-positive { background: var(--success); }
+        .sentiment-neutral { background: var(--warning); }
+        .sentiment-negative { background: var(--danger); }
+
+        .sentiment-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 0;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--primary-light);
+            border-radius: 50%;
+            animation: typingBounce 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes typingBounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        /* Chat Input */
+        .chat-input-area {
+            padding: 16px 28px 20px;
+            border-top: 1px solid var(--border);
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+        }
+
+        .input-actions {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+
+        .input-action-btn {
+            padding: 6px 12px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .input-action-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--text-primary);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 14px 18px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            color: var(--text-primary);
+            font-size: 14px;
+            resize: none;
+            outline: none;
+            min-height: 48px;
+            max-height: 120px;
+            font-family: inherit;
+            line-height: 1.5;
+            transition: border-color 0.2s ease;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--gradient-1);
+            border: none;
+            border-radius: 14px;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(79, 70, 229, 0.4);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Report Panel */
+        .report-panel {
+            width: 420px;
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            background: rgba(30, 41, 59, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .report-panel.hidden {
+            width: 0;
+            overflow: hidden;
+            border: none;
+        }
+
+        .report-header {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .report-title {
+            font-size: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .report-actions {
+            display: flex;
+            gap: 6px;
+        }
+
+        .report-action-btn {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .report-action-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--text-primary);
+        }
+
+        .report-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .report-content::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .report-content::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .report-section {
+            margin-bottom: 20px;
+        }
+
+        .report-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--accent-light);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .report-section-body {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.8;
+        }
+
+        .report-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .report-placeholder-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .report-placeholder-text {
+            font-size: 14px;
+        }
+
+        /* Keyword Tags */
+        .keyword-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin: 8px 0;
+        }
+
+        .keyword-tag {
+            padding: 4px 10px;
+            background: rgba(79, 70, 229, 0.12);
+            border: 1px solid rgba(79, 70, 229, 0.25);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--primary-light);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .keyword-tag:hover {
+            background: rgba(79, 70, 229, 0.25);
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin: 12px 0;
+        }
+
+        .progress-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .progress-step.completed {
+            color: var(--success);
+        }
+
+        .progress-step.active {
+            color: var(--accent);
+        }
+
+        .step-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            flex-shrink: 0;
+        }
+
+        .progress-step.completed .step-icon {
+            background: rgba(16, 185, 129, 0.15);
+        }
+
+        .progress-step.active .step-icon {
+            background: rgba(6, 182, 212, 0.15);
+            animation: pulse 1.5s infinite;
+        }
+
+        /* Toggle button for report panel */
+        .toggle-report-btn {
+            padding: 8px 14px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-report-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--text-primary);
+        }
+
+        /* Mobile sidebar toggle */
+        .mobile-menu-btn {
+            display: none;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--text-primary);
+            font-size: 20px;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Loading shimmer */
+        .shimmer {
+            background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-card-hover) 50%, var(--bg-card) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+        }
+
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .shimmer-line {
+            height: 14px;
+            margin-bottom: 8px;
+        }
+
+        .shimmer-line:last-child {
+            width: 60%;
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            .result-sidebar { display: none; }
-            .result-main { padding: 20px; }
-            .welcome-title { font-size: 24px; }
+        @media (max-width: 1200px) {
+            .report-panel {
+                width: 360px;
+            }
+        }
+
+        @media (max-width: 960px) {
+            .sidebar {
+                position: fixed;
+                left: 0;
+                top: 0;
+                bottom: 0;
+                z-index: 100;
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .mobile-menu-btn {
+                display: flex;
+            }
+            .report-panel {
+                display: none;
+            }
+            .time-filters {
+                display: none;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .top-bar {
+                padding: 12px 16px;
+            }
+            .chat-messages {
+                padding: 16px;
+            }
+            .chat-input-area {
+                padding: 12px 16px 16px;
+            }
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Markdown report styling */
+        .md-report {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 12px;
+            line-height: 1.7;
+            color: var(--text-secondary);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .md-report .md-h1 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 16px 0 8px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .md-report .md-h2 {
+            font-size: 15px;
+            font-weight: 700;
+            color: var(--accent-light);
+            margin: 14px 0 6px;
+        }
+
+        .md-report .md-h3 {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin: 10px 0 4px;
+        }
+
+        .md-report .md-bold { color: var(--text-primary); font-weight: 600; }
+        .md-report .md-code { background: var(--bg-input); padding: 1px 4px; border-radius: 3px; }
+
+        /* Conversation memory indicator */
+        .memory-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(124, 58, 237, 0.1);
+            border: 1px solid rgba(124, 58, 237, 0.2);
+            border-radius: 8px;
+            font-size: 12px;
+            color: #A78BFA;
+        }
+
+        .new-chat-btn {
+            padding: 10px 18px;
+            background: transparent;
+            border: 1px dashed var(--border);
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .new-chat-btn:hover {
+            border-color: var(--primary-light);
+            color: var(--text-primary);
+            background: rgba(79, 70, 229, 0.05);
         }
     </style>
 </head>
 <body>
-
-    <!-- Header -->
-    <header class="header">
-        <div class="logo">
-            <div class="logo-icon">N</div>
-            <span>NewsAgent</span>
-        </div>
-        <div class="header-actions">
-            <button class="btn" id="btn-new">
-                <span>✨</span> 新对话
-            </button>
-            <button class="btn btn-primary" id="btn-deploy">
-                <span>🚀</span> 发布与分享
-            </button>
-        </div>
-    </header>
-
-    <!-- Main Container -->
-    <div class="main-container">
-        
-        <!-- Welcome Screen -->
-        <div class="welcome-screen" id="welcome-screen">
-            <h1 class="welcome-title">洞察新闻背后的逻辑</h1>
-            <p class="welcome-subtitle">输入新闻主题、链接或事件，AI 智能体将为您全网检索、交叉验证并生成深度分析报告。</p>
-            
-            <div class="search-box">
-                <textarea class="search-input" id="search-input" placeholder="例如：分析 OpenAI 发布 Sora 对影视行业的冲击..." rows="1"></textarea>
-                <div class="search-footer">
-                    <span class="search-hint">按 Enter 发送，Shift + Enter 换行</span>
-                    <button class="search-btn" id="search-btn">➔</button>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🧠</div>
+                    <span class="logo-text">NewsMind</span>
+                </div>
+                <div class="logo-subtitle">AI 新闻分析智能体</div>
+                <div class="agent-status">
+                    <div class="status-dot"></div>
+                    <span class="status-text">智能体运行中</span>
                 </div>
             </div>
 
-            <div class="quick-prompts">
-                <div class="prompt-chip" data-prompt="深度分析特斯拉最新财报及马斯克的未来战略">📊 特斯拉财报分析</div>
-                <div class="prompt-chip" data-prompt="梳理近期全球AI芯片出口管制政策的变化及影响">🌍 AI芯片政策追踪</div>
-                <div class="prompt-chip" data-prompt="对比分析苹果Vision Pro与Meta Quest 3的市场表现">🥽 竞品对比分析</div>
+            <div class="capabilities">
+                <div class="section-title">🛠️ 智能体能力</div>
+
+                <div class="capability-card active" id="cap-search">
+                    <div class="cap-header">
+                        <div class="cap-icon">🔍</div>
+                        <span class="cap-name">实时新闻获取</span>
+                    </div>
+                    <div class="cap-desc">搜索任意话题的最新新闻资讯，聚合多源信息</div>
+                </div>
+
+                <div class="capability-card" id="cap-analyze">
+                    <div class="cap-header">
+                        <div class="cap-icon">🔬</div>
+                        <span class="cap-name">深度分析</span>
+                    </div>
+                    <div class="cap-desc">多维度解读新闻：背景溯源、影响评估、趋势预测</div>
+                </div>
+
+                <div class="capability-card" id="cap-report">
+                    <div class="cap-header">
+                        <div class="cap-icon">📊</div>
+                        <span class="cap-name">结构化输出</span>
+                    </div>
+                    <div class="cap-desc">Markdown 格式分析报告，数据可视化呈现</div>
+                </div>
+
+                <div class="capability-card" id="cap-memory">
+                    <div class="cap-header">
+                        <div class="cap-icon">💬</div>
+                        <span class="cap-name">对话记忆</span>
+                    </div>
+                    <div class="cap-desc">支持多轮深入探讨，上下文自动关联</div>
+                </div>
+
+                <div class="capability-card" id="cap-time">
+                    <div class="cap-header">
+                        <div class="cap-icon">⏰</div>
+                        <span class="cap-name">多时间维度</span>
+                    </div>
+                    <div class="cap-desc">按天、周、月灵活筛选，精准定位信息</div>
+                </div>
+
+                <button class="new-chat-btn" id="newChatBtn">
+                    ✨ 开启新对话
+                </button>
             </div>
-        </div>
 
-        <!-- Result Screen -->
-        <div class="result-screen" id="result-screen">
-            <div class="result-main">
-                <h1 class="result-query" id="result-query"></h1>
-                
-                <!-- Agent Thinking Steps -->
-                <div class="agent-steps">
-                    <div class="steps-header" id="steps-header">
-                        <div class="steps-title">
-                            <span class="step-indicator" id="step-indicator"></span>
-                            <span id="steps-status">智能体正在思考...</span>
-                        </div>
-                        <span class="steps-toggle" id="steps-toggle">收起 ▼</span>
-                    </div>
-                    <div class="steps-list" id="steps-list">
-                        <div class="step-item" id="agent-step-1">
-                            <span class="step-icon">🔍</span>
-                            <span>全网检索相关资讯与权威报道...</span>
-                        </div>
-                        <div class="step-item" id="agent-step-2">
-                            <span class="step-icon">📖</span>
-                            <span>阅读并提取核心事实与数据...</span>
-                        </div>
-                        <div class="step-item" id="agent-step-3">
-                            <span class="step-icon">⚖️</span>
-                            <span>交叉验证信源，剔除虚假信息...</span>
-                        </div>
-                        <div class="step-item" id="agent-step-4">
-                            <span class="step-icon">✍️</span>
-                            <span>综合多维视角，撰写深度报告...</span>
-                        </div>
-                    </div>
+            <div class="sidebar-stats">
+                <div class="stat-row">
+                    <span class="stat-label">对话轮次</span>
+                    <span class="stat-value" id="turnCount">0</span>
                 </div>
-
-                <!-- Generated Report -->
-                <div class="report-content" id="report-content">
-                    <!-- Markdown content will be injected here -->
+                <div class="stat-row">
+                    <span class="stat-label">已分析新闻</span>
+                    <span class="stat-value" id="newsCount">0</span>
                 </div>
-            </div>
-
-            <!-- Right Sidebar: Sources -->
-            <aside class="result-sidebar">
-                <div class="sidebar-section">
-                    <div class="sidebar-title">📚 参考信源 (Sources)</div>
-                    <div id="sources-list">
-                        <!-- Sources will be injected here -->
-                    </div>
-                </div>
-                <div class="sidebar-section">
-                    <div class="sidebar-title">📊 数据洞察</div>
-                    <div style="width: 100%; height: 160px; background: var(--bg-sidebar); border-radius: 8px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                        <img src="https://bailian-bmp-pre.oss-cn-hangzhou.aliyuncs.com/public/system_agent/PlaceHolder.png" alt="Chart" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6;">
-                    </div>
-                </div>
-            </aside>
-        </div>
-    </div>
-
-    <!-- Deploy Modal -->
-    <div class="modal-overlay" id="deploy-modal">
-        <div class="modal">
-            <button class="modal-close" id="modal-close">×</button>
-            <h2>🚀 发布您的智能体</h2>
-            <p>要让其他人能够访问和使用这个新闻分析智能体，您可以选择以下方式进行部署。当前页面为纯前端演示，接入真实大模型需配置后端 API。</p>
-            
-            <div class="deploy-options">
-                <div class="deploy-option" id="deploy-vercel">
-                    <div class="deploy-icon">▲</div>
-                    <div class="deploy-text">
-                        <h4>部署到 Vercel / Netlify (推荐)</h4>
-                        <p>将此 HTML 文件推送到 GitHub，一键关联 Vercel，即可获得免费公网域名。</p>
-                    </div>
-                </div>
-                <div class="deploy-option" id="deploy-dify">
-                    <div class="deploy-icon">🔗</div>
-                    <div class="deploy-text">
-                        <h4>接入 Dify / Coze 工作流</h4>
-                        <p>在 Dify 中搭建真实的 Agent 逻辑，获取 API 后替换本页面的 Mock 数据。</p>
-                    </div>
-                </div>
-                <div class="deploy-option" id="deploy-iframe">
-                    <div class="deploy-icon">🖼️</div>
-                    <div class="deploy-text">
-                        <h4>嵌入到现有网站 (Iframe)</h4>
-                        <p>部署后，使用 <code>&lt;iframe&gt;</code> 标签将其嵌入到您的博客或企业官网中。</p>
-                    </div>
+                <div class="stat-row">
+                    <span class="stat-label">生成报告</span>
+                    <span class="stat-value" id="reportCount">0</span>
                 </div>
             </div>
-        </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">☰</button>
+                <div class="search-section">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" placeholder="输入话题搜索新闻，如：人工智能、芯片产业、气候变化...">
+                    </div>
+                    <button class="search-btn" id="searchBtn">
+                        <span>🚀</span>
+                        <span>搜索分析</span>
+                    </button>
+                </div>
+                <div class="time-filters">
+                    <button class="time-btn active" data-range="day">今天</button>
+                    <button class="time-btn" data-range="week">本周</button>
+                    <button class="time-btn" data-range="month">本月</button>
+                </div>
+                <button class="toggle-report-btn" id="toggleReportBtn">
+                    📄 <span>报告</span>
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="content-area">
+                <!-- Chat Panel -->
+                <div class="chat-panel">
+                    <div class="chat-messages" id="chatMessages">
+                        <div class="welcome-section" id="welcomeSection">
+                            <div class="welcome-icon">🌐</div>
+                            <h2 class="welcome-title">欢迎使用 NewsMind</h2>
+                            <p class="welcome-desc">
+                                我是您的 AI 新闻分析智能体，具备实时新闻搜索和深度分析能力。
+                                输入任意话题，我将为您搜索最新资讯并生成专业的分析报告。
+                            </p>
+                            <div class="quick-actions">
+                                <div class="quick-action" data-query="2024年人工智能最新突破">
+                                    <div class="qa-icon">🤖</div>
+                                    <div class="qa-title">AI 最新突破</div>
+                                    <div class="qa-desc">2024年人工智能领域重大进展</div>
+                                </div>
+                                <div class="quick-action" data-query="全球芯片产业格局变化">
+                                    <div class="qa-icon">💎</div>
+                                    <div class="qa-title">芯片产业格局</div>
+                                    <div class="qa-desc">全球半导体产业链最新动态</div>
+                                </div>
+                                <div class="quick-action" data-query="新能源汽车市场趋势">
+                                    <div class="qa-icon">🚗</div>
+                                    <div class="qa-title">新能源汽车</div>
+                                    <div class="qa-desc">电动汽车市场竞争与趋势分析</div>
+                                </div>
+                                <div class="quick-action" data-query="全球经济形势与政策走向">
+                                    <div class="qa-icon">📈</div>
+                                    <div class="qa-title">全球经济形势</div>
+                                    <div class="qa-desc">宏观经济政策与市场走向预测</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <div class="input-actions">
+                            <button class="input-action-btn" id="deepAnalysisBtn">🔬 深度分析</button>
+                            <button class="input-action-btn" id="trendBtn">📈 趋势预测</button>
+                            <button class="input-action-btn" id="compareBtn">⚖️ 对比分析</button>
+                            <button class="input-action-btn" id="summaryBtn">📝 生成摘要</button>
+                        </div>
+                        <div class="chat-input-wrapper">
+                            <textarea class="chat-input" id="chatInput" placeholder="输入您的问题，继续深入探讨..." rows="1"></textarea>
+                            <button class="send-btn" id="sendBtn" disabled>➤</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Report Panel -->
+                <div class="report-panel hidden" id="reportPanel">
+                    <div class="report-header">
+                        <div class="report-title">📊 分析报告</div>
+                        <div class="report-actions">
+                            <button class="report-action-btn" id="copyReportBtn" title="复制报告">📋</button>
+                            <button class="report-action-btn" id="downloadReportBtn" title="下载报告">⬇️</button>
+                        </div>
+                    </div>
+                    <div class="report-content" id="reportContent">
+                        <div class="report-placeholder">
+                            <div class="report-placeholder-icon">📊</div>
+                            <div class="report-placeholder-text">搜索话题后将自动生成分析报告</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // DOM Elements
-            const welcomeScreen = document.getElementById('welcome-screen');
-            const resultScreen = document.getElementById('result-screen');
-            const searchInput = document.getElementById('search-input');
-            const searchBtn = document.getElementById('search-btn');
-            const resultQuery = document.getElementById('result-query');
-            const reportContent = document.getElementById('report-content');
-            const sourcesList = document.getElementById('sources-list');
-            const stepsList = document.getElementById('steps-list');
-            const stepsHeader = document.getElementById('steps-header');
-            const stepsToggle = document.getElementById('steps-toggle');
-            const stepIndicator = document.getElementById('step-indicator');
-            const stepsStatus = document.getElementById('steps-status');
-            const btnNew = document.getElementById('btn-new');
-            const btnDeploy = document.getElementById('btn-deploy');
-            const deployModal = document.getElementById('deploy-modal');
-            const modalClose = document.getElementById('modal-close');
-            const promptChips = document.querySelectorAll('.prompt-chip');
+        // ===================== State Management =====================
+        const state = {
+            messages: [],
+            turnCount: 0,
+            newsCount: 0,
+            reportCount: 0,
+            currentTopic: '',
+            timeRange: 'day',
+            isProcessing: false,
+            reportVisible: false,
+            conversationHistory: []
+        };
 
-            let isGenerating = false;
+        // ===================== DOM References =====================
+        const dom = {
+            sidebar: document.getElementById('sidebar'),
+            mobileMenuBtn: document.getElementById('mobileMenuBtn'),
+            searchInput: document.getElementById('searchInput'),
+            searchBtn: document.getElementById('searchBtn'),
+            chatMessages: document.getElementById('chatMessages'),
+            welcomeSection: document.getElementById('welcomeSection'),
+            chatInput: document.getElementById('chatInput'),
+            sendBtn: document.getElementById('sendBtn'),
+            reportPanel: document.getElementById('reportPanel'),
+            reportContent: document.getElementById('reportContent'),
+            toggleReportBtn: document.getElementById('toggleReportBtn'),
+            turnCount: document.getElementById('turnCount'),
+            newsCount: document.getElementById('newsCount'),
+            reportCount: document.getElementById('reportCount'),
+            newChatBtn: document.getElementById('newChatBtn'),
+            deepAnalysisBtn: document.getElementById('deepAnalysisBtn'),
+            trendBtn: document.getElementById('trendBtn'),
+            compareBtn: document.getElementById('compareBtn'),
+            summaryBtn: document.getElementById('summaryBtn'),
+            copyReportBtn: document.getElementById('copyReportBtn'),
+            downloadReportBtn: document.getElementById('downloadReportBtn')
+        };
 
-            // Auto-resize textarea
-            searchInput.addEventListener('input', () => {
-                searchInput.style.height = 'auto';
-                searchInput.style.height = searchInput.scrollHeight + 'px';
-            });
+        // ===================== Mock Data Generator =====================
+        function generateMockNews(topic) {
+            const newsData = {
+                default: [
+                    {
+                        source: '新华社',
+                        title: `${topic}领域迎来重大突破，专家称将改变行业格局`,
+                        time: '2小时前',
+                        tag: '重磅'
+                    },
+                    {
+                        source: '路透社',
+                        title: `全球${topic}峰会召开，多国达成合作共识`,
+                        time: '4小时前',
+                        tag: '国际'
+                    },
+                    {
+                        source: '第一财经',
+                        title: `${topic}产业链深度报告：市场规模突破万亿`,
+                        time: '6小时前',
+                        tag: '产业'
+                    },
+                    {
+                        source: 'Nature',
+                        title: `最新研究揭示${topic}技术的关键瓶颈与突破路径`,
+                        time: '8小时前',
+                        tag: '学术'
+                    },
+                    {
+                        source: '财新网',
+                        title: `政策利好频出，${topic}板块迎来投资热潮`,
+                        time: '10小时前',
+                        tag: '投资'
+                    }
+                ]
+            };
+            return newsData.default;
+        }
 
-            // Event: Search
-            searchBtn.addEventListener('click', () => startAnalysis());
-            searchInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    startAnalysis();
-                }
-            });
+        function generateAnalysisReport(topic, timeRange) {
+            const rangeText = { day: '今日', week: '本周', month: '本月' };
+            return `# ${topic} · 新闻分析报告
 
-            // Event: Quick Prompts
-            promptChips.forEach(chip => {
-                chip.addEventListener('click', () => {
-                    searchInput.value = chip.getAttribute('data-prompt');
-                    startAnalysis();
-                });
-            });
+## 📋 概要
+${rangeText[timeRange]}共采集到与「${topic}」相关的高质量新闻 **${Math.floor(Math.random() * 50 + 30)}** 篇，覆盖 **${Math.floor(Math.random() * 8 + 5)}** 个权威信息源。以下是多维度深度分析结果。
 
-            // Event: Toggle Steps
-            stepsHeader.addEventListener('click', () => {
-                stepsList.classList.toggle('collapsed');
-                stepsToggle.textContent = stepsList.classList.contains('collapsed') ? '展开 ▶' : '收起 ▼';
-            });
+---
 
-            // Event: New Chat
-            btnNew.addEventListener('click', () => {
-                if (isGenerating) return;
-                welcomeScreen.classList.remove('hidden');
-                resultScreen.classList.remove('active');
-                searchInput.value = '';
-                searchInput.focus();
-            });
+## 🔍 关键事件
 
-            // Event: Deploy Modal
-            btnDeploy.addEventListener('click', () => deployModal.classList.add('active'));
-            modalClose.addEventListener('click', () => deployModal.classList.remove('active'));
-            deployModal.addEventListener('click', (e) => {
-                if (e.target === deployModal) deployModal.classList.remove('active');
-            });
+| 序号 | 事件 | 影响力 | 时间 |
+|------|------|--------|------|
+| 1 | ${topic}核心技术取得突破性进展 | ⭐⭐⭐⭐⭐ | 2天前 |
+| 2 | 多国联合发布${topic}发展白皮书 | ⭐⭐⭐⭐ | 3天前 |
+| 3 | 头部企业宣布百亿级${topic}投资计划 | ⭐⭐⭐⭐ | 5天前 |
+| 4 | ${topic}国际标准制定进入关键阶段 | ⭐⭐⭐ | 1周前 |
 
-            // Deploy option clicks (Simulated)
-            document.getElementById('deploy-vercel').addEventListener('click', () => {
-                alert('提示：请将此 HTML 文件保存为 index.html，推送到 GitHub 仓库，然后在 Vercel.com 导入该仓库即可自动生成公网链接。');
-            });
-            document.getElementById('deploy-dify').addEventListener('click', () => {
-                alert('提示：前往 Dify.ai 创建一个 Agent 应用，配置好您的 Prompt 和知识库，获取 API Key 后，修改本页面 JS 中的 fetch 请求即可接入真实大模型。');
-            });
-            document.getElementById('deploy-iframe').addEventListener('click', () => {
-                alert('部署完成后，复制您的网址，使用 <iframe src="您的网址" width="100%" height="800px"></iframe> 嵌入即可。');
-            });
+---
 
-            // Core Logic: Start Analysis
-            function startAnalysis() {
-                const query = searchInput.value.trim();
-                if (!query || isGenerating) return;
+## 📊 舆情分析
 
-                isGenerating = true;
-                searchBtn.disabled = true;
-                
-                // Switch UI
-                welcomeScreen.classList.add('hidden');
-                resultScreen.classList.add('active');
-                resultQuery.textContent = query;
-                reportContent.innerHTML = '';
-                sourcesList.innerHTML = '';
-                
-                // Reset steps
-                document.querySelectorAll('.step-item').forEach(el => {
-                    el.classList.remove('active', 'done');
-                });
-                stepIndicator.classList.remove('done');
-                stepsStatus.textContent = '智能体正在思考...';
-                stepsList.classList.remove('collapsed');
-                stepsToggle.textContent = '收起 ▼';
+**整体情绪分布：**
+- 🟢 正面报道：62%（技术突破、政策支持、市场增长）
+- 🟡 中性报道：25%（行业动态、数据统计、专家评论）
+- 🔴 负面报道：13%（监管挑战、伦理争议、泡沫担忧）
 
-                // Run simulation
-                runAgentSimulation(query);
+---
+
+## 🔬 背景分析
+
+${topic}领域近年来发展迅猛，主要受到以下因素驱动：
+
+1. **技术成熟度提升** — 底层技术经过多年积累，已进入商业化爆发期
+2. **政策环境优化** — 各国政府相继出台扶持政策，营造良好发展环境
+3. **市场需求旺盛** — 企业和消费者对${topic}相关产品的需求持续增长
+4. **资本大量涌入** — 风投和产业资本持续加注，加速技术迭代
+
+---
+
+## 📈 影响评估
+
+**短期影响（1-3个月）：**
+- 相关概念股可能持续走强
+- 行业竞争加剧，并购重组频率提升
+- 人才争夺进入白热化阶段
+
+**中期影响（3-12个月）：**
+- 产业链上下游加速整合
+- 应用场景快速拓展至更多垂直领域
+- 监管框架逐步完善
+
+**长期影响（1-3年）：**
+- ${topic}将成为基础设施级技术
+- 催生全新的商业模式和产业生态
+- 对传统行业产生深远颠覆性影响
+
+---
+
+## 🎯 趋势预测
+
+基于当前数据分析，未来${topic}领域将呈现以下趋势：
+
+> "我们正在见证${topic}从量变到质变的关键转折点。" —— 行业分析师
+
+1. **技术融合加速** — 与AI、区块链等技术深度融合
+2. **应用场景下沉** — 从一线城市向更广泛市场渗透
+3. **国际合作深化** — 跨国技术标准和治理框架趋于统一
+4. **可持续发展** — 绿色低碳成为核心发展方向
+
+---
+
+## 💡 核心洞察
+
+- ${topic}正处于 **Gartner曲线的攀升期**，预计2-3年内达到生产力高峰
+- 建议重点关注 **技术落地能力** 和 **商业化路径** 两个核心维度
+- 风险因素主要包括：监管不确定性、技术路线分歧、市场竞争加剧
+
+---
+
+*报告生成时间：${new Date().toLocaleString('zh-CN')}*
+*数据来源：多源新闻聚合分析*
+*分析引擎：NewsMind AI v2.0*`;
+        }
+
+        function generateAgentResponse(topic, type) {
+            if (type === 'search') {
+                return generateSearchResponse(topic);
+            } else if (type === 'deep') {
+                return generateDeepAnalysis(topic);
+            } else if (type === 'trend') {
+                return generateTrendAnalysis(topic);
+            } else if (type === 'compare') {
+                return generateComparison(topic);
+            } else if (type === 'summary') {
+                return generateSummary(topic);
+            } else {
+                return generateFollowUp(topic);
             }
+        }
 
-            // Simulation Logic
-            async function runAgentSimulation(query) {
-                const steps = [
-                    document.getElementById('agent-step-1'),
-                    document.getElementById('agent-step-2'),
-                    document.getElementById('agent-step-3'),
-                    document.getElementById('agent-step-4')
-                ];
-
-                // Step 1: Search
-                steps[0].classList.add('active');
-                await delay(1200);
-                steps[0].classList.remove('active');
-                steps[0].classList.add('done');
-                renderSources();
-
-                // Step 2: Read
-                steps[1].classList.add('active');
-                await delay(1500);
-                steps[1].classList.remove('active');
-                steps[1].classList.add('done');
-
-                // Step 3: Verify
-                steps[2].classList.add('active');
-                await delay(1000);
-                steps[2].classList.remove('active');
-                steps[2].classList.add('done');
-
-                // Step 4: Write
-                steps[3].classList.add('active');
-                stepsStatus.textContent = '正在生成报告...';
-                await delay(800);
-                steps[3].classList.remove('active');
-                steps[3].classList.add('done');
-                
-                stepIndicator.classList.add('done');
-                stepsStatus.textContent = '分析完成';
-
-                // Generate Report
-                await streamReport(query);
-                
-                isGenerating = false;
-                searchBtn.disabled = false;
-            }
-
-            function renderSources() {
-                const sources = [
-                    { title: 'Reuters - 深度行业影响分析', url: 'reuters.com/technology/...' },
-                    { title: 'Bloomberg - 市场反应与资本动向', url: 'bloomberg.com/news/...' },
-                    { title: 'TechCrunch - 核心技术突破解读', url: 'techcrunch.com/2024/...' },
-                    { title: '36氪 - 国内产业链从业者访谈', url: '36kr.com/p/...' },
-                    { title: 'ArXiv - 相关技术论文预印本', url: 'arxiv.org/abs/...' }
-                ];
-
-                sourcesList.innerHTML = sources.map(s => `
-                    <a href="#" class="source-card" onclick="event.preventDefault()">
-                        <div class="source-favicon">📄</div>
-                        <div class="source-info">
-                            <div class="source-title">${s.title}</div>
-                            <div class="source-url">${s.url}</div>
+        function generateSearchResponse(topic) {
+            const news = generateMockNews(topic);
+            let html = `<h3>📰 「${topic}」实时新闻搜索结果</h3>`;
+            html += `<p>已为您搜索到 <strong>${news.length}</strong> 条最新相关资讯：</p>`;
+            html += '<div class="news-card-list">';
+            news.forEach(n => {
+                html += `
+                    <div class="news-card">
+                        <div class="news-card-source">${n.source}</div>
+                        <div class="news-card-title">${n.title}</div>
+                        <div class="news-card-meta">
+                            <span>🕐 ${n.time}</span>
+                            <span class="news-card-tag">${n.tag}</span>
                         </div>
-                    </a>
-                `).join('');
-            }
+                    </div>`;
+            });
+            html += '</div>';
+            html += `<div class="keyword-tags">
+                <span class="keyword-tag" data-topic="${topic}技术">${topic}技术</span>
+                <span class="keyword-tag" data-topic="${topic}政策">${topic}政策</span>
+                <span class="keyword-tag" data-topic="${topic}投资">${topic}投资</span>
+                <span class="keyword-tag" data-topic="${topic}人才">${topic}人才</span>
+            </div>`;
+            html += `<p style="margin-top: 12px;">💡 您可以点击关键词进一步探索，或选择 <strong>深度分析</strong> 获取完整报告。</p>`;
+            return html;
+        }
 
-            async function streamReport(query) {
-                // Mock Markdown content based on query
-                const mockReport = `# 深度分析报告：${query}
+        function generateDeepAnalysis(topic) {
+            return `
+                <h3>🔬 「${topic}」深度分析报告</h3>
+                <div class="analysis-section">
+                    <h4>🏛️ 背景溯源</h4>
+                    <p>${topic}的发展历程可追溯到十年前。经过长期技术积累和市场培育，该领域已从概念验证阶段迈入规模化应用阶段。关键里程碑事件包括：</p>
+                    <ul>
+                        <li><strong>2018年</strong> — 基础理论框架确立，首批原型系统问世</li>
+                        <li><strong>2020年</strong> — 行业标准初步形成，头部企业入局</li>
+                        <li><strong>2022年</strong> — 技术突破带来成本大幅下降，商业化加速</li>
+                        <li><strong>2024年</strong> — 生态体系初步建成，进入爆发增长期</li>
+                    </ul>
+                </div>
+                <div class="analysis-section">
+                    <h4>💥 影响评估</h4>
+                    <p><strong>经济影响：</strong>预计${topic}将在未来5年内创造超过 <strong>2万亿美元</strong> 的市场价值，带动上下游产业链全面升级。</p>
+                    <p><strong>社会影响：</strong>将深刻改变就业结构、教育模式和生活方式，预计影响全球 <strong>40%</strong> 的工作岗位。</p>
+                    <p><strong>地缘影响：</strong>各国在${topic}领域的竞争日趋激烈，技术主权成为国家战略核心议题。</p>
+                </div>
+                <div class="analysis-section">
+                    <h4>📈 趋势预测</h4>
+                    <p>基于多维数据模型分析：</p>
+                    <ul>
+                        <li>📊 短期（3个月）：行业热度指数 <strong>87/100</strong>，处于高位运行</li>
+                        <li>📊 中期（1年）：技术成熟度预计提升 <strong>35%</strong></li>
+                        <li>📊 长期（3年）：市场规模年复合增长率预计达 <strong>42%</strong></li>
+                    </ul>
+                </div>
+                <blockquote>核心观点：${topic}正从技术驱动阶段转向应用驱动阶段，落地能力将成为下一阶段竞争的关键分水岭。</blockquote>
+            `;
+        }
 
-## 核心摘要
-针对“${query}”这一议题，本智能体检索了过去 72 小时内全球 45 家权威媒体及行业智库的报道。综合来看，该事件不仅在技术/商业层面引发了直接震荡，更对上下游产业链的长期格局产生了深远影响。
+        function generateTrendAnalysis(topic) {
+            return `
+                <h3>📈 「${topic}」趋势预测分析</h3>
+                <div class="analysis-section">
+                    <h4>📊 热度趋势</h4>
+                    <div class="sentiment-bar">
+                        <div class="sentiment-segment sentiment-positive" style="width: 72%"></div>
+                        <div class="sentiment-segment sentiment-neutral" style="width: 18%"></div>
+                        <div class="sentiment-segment sentiment-negative" style="width: 10%"></div>
+                    </div>
+                    <div class="sentiment-labels">
+                        <span>🟢 上升趋势 72%</span>
+                        <span>🟡 平稳 18%</span>
+                        <span>🔴 下行 10%</span>
+                    </div>
+                </div>
+                <div class="analysis-section">
+                    <h4>🎯 关键预测</h4>
+                    <table>
+                        <tr>
+                            <th>时间窗口</th>
+                            <th>预测事件</th>
+                            <th>置信度</th>
+                        </tr>
+                        <tr>
+                            <td>Q2 2025</td>
+                            <td>${topic}行业标准 2.0 发布</td>
+                            <td>85%</td>
+                        </tr>
+                        <tr>
+                            <td>Q3 2025</td>
+                            <td>首批大规模商用产品上市</td>
+                            <td>72%</td>
+                        </tr>
+                        <tr>
+                            <td>2025年末</td>
+                            <td>市场规模突破千亿大关</td>
+                            <td>68%</td>
+                        </tr>
+                        <tr>
+                            <td>2026年</td>
+                            <td>行业进入整合期</td>
+                            <td>61%</td>
+                        </tr>
+                    </table>
+                </div>
+                <p>💡 <strong>投资建议：</strong>当前处于布局窗口期，建议重点关注具有核心技术壁垒和明确商业化路径的标的。</p>
+            `;
+        }
 
-> **核心结论**：市场短期内存在过度反应，但中长期来看，该事件确立的新范式将重塑行业准入门槛，头部效应将进一步加剧。
+        function generateComparison(topic) {
+            return `
+                <h3>⚖️ 「${topic}」对比分析</h3>
+                <div class="analysis-section">
+                    <h4>🌍 全球主要经济体的${topic}布局对比</h4>
+                    <table>
+                        <tr>
+                            <th>维度</th>
+                            <th>🇨🇳 中国</th>
+                            <th>🇺🇸 美国</th>
+                            <th>🇪🇺 欧盟</th>
+                        </tr>
+                        <tr>
+                            <td>政策支持力度</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td>技术研发水平</td>
+                            <td>⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td>产业化程度</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td>市场规模</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                        <tr>
+                            <td>人才储备</td>
+                            <td>⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐⭐⭐</td>
+                            <td>⭐⭐⭐</td>
+                        </tr>
+                    </table>
+                </div>
+                <p><strong>分析结论：</strong>中国在${topic}的产业化和市场规模方面具有显著优势，美国在基础研发方面领先，欧盟则侧重于监管框架和标准制定。</p>
+            `;
+        }
 
-## 关键事实与数据交叉验证
-经过对多源信息的交叉比对，我们确认以下核心事实：
-1. **时间节点**：相关动作于本周初正式落地，比市场预期提前了约 2 周。
-2. **核心数据**：据 Bloomberg 与 Reuters 交叉验证，涉及的资金/算力/市场规模预估在 **120亿 - 150亿美元** 之间。
-3. **关键人物/实体**：核心决策层在内部备忘录中明确提到了“防御性扩张”战略。
+        function generateSummary(topic) {
+            return `
+                <h3>📝 「${topic}」智能摘要</h3>
+                <div class="analysis-section">
+                    <h4>🔑 核心要点</h4>
+                    <ol>
+                        <li><strong>技术进展：</strong>${topic}核心技术取得重要突破，性能指标提升超 3 倍</li>
+                        <li><strong>市场动态：</strong>全球市场规模预计年底突破 5000 亿美元</li>
+                        <li><strong>政策信号：</strong>多国加大政策支持力度，监管框架加速完善</li>
+                        <li><strong>企业布局：</strong>头部科技公司纷纷加码，创业生态持续繁荣</li>
+                        <li><strong>社会反响：</strong>公众关注度创历史新高，应用场景持续拓展</li>
+                    </ol>
+                </div>
+                <div class="analysis-section">
+                    <h4>📌 一句话总结</h4>
+                    <p><strong>${topic}</strong>正处于从技术验证到规模化应用的关键转型期，多方力量共同推动下，预计将在未来 2-3 年内实现爆发式增长。</p>
+                </div>
+            `;
+        }
 
-## 多维影响分析
+        function generateFollowUp(input) {
+            const responses = [
+                `<h3>🤔 深入探讨</h3>
+                <p>关于您提到的 <strong>"${input}"</strong>，结合之前的分析上下文，我有以下补充观点：</p>
+                <div class="analysis-section">
+                    <h4>💡 延伸分析</h4>
+                    <p>基于我们之前讨论的内容，这个话题可以从以下几个角度深入理解：</p>
+                    <ul>
+                        <li><strong>第一层面：</strong>从宏观视角来看，这反映了当前全球产业格局的深层变化</li>
+                        <li><strong>第二层面：</strong>微观层面，企业和个体的应对策略将决定其在这一浪潮中的位置</li>
+                        <li><strong>第三层面：</strong>从时间维度看，这一趋势将在未来 3-5 年内加速演进</li>
+                    </ul>
+                </div>
+                <p>您想进一步了解哪个方面？我可以继续深入分析 🔍</p>`,
 
-### 1. 产业链冲击
-* **上游供应商**：面临订单重新分配的风险，部分依赖单一客户的中小企业利润率可能下滑 15%-20%。
-* **中游制造/服务**：迎来整合期，具备规模化交付能力的企业将获得更多溢出订单。
-* **下游应用**：短期内获客成本上升，但长期用户体验将因技术升级得到显著改善。
+                `<h3>📊 补充分析</h3>
+                <p>针对 <strong>"${input}"</strong>，基于对话记忆中的上下文信息，我为您补充以下分析：</p>
+                <div class="analysis-section">
+                    <h4>🔗 关联分析</h4>
+                    <p>将此话题与我们之前讨论的内容关联起来看：</p>
+                    <ol>
+                        <li>两者存在显著的 <strong>协同效应</strong>，互相促进发展</li>
+                        <li>在资源分配上可能存在一定的 <strong>竞争关系</strong></li>
+                        <li>长期来看，<strong>融合趋势</strong> 将日益明显</li>
+                    </ol>
+                </div>
+                <blockquote>建议采用系统性的分析框架，将相关因素纳入统一模型进行综合评估。</blockquote>
+                <p>需要我生成一份完整的对比报告吗？ 📄</p>`
+            ];
+            return responses[Math.floor(Math.random() * responses.length)];
+        }
 
-### 2. 资本市场反应
-* 相关概念股在消息公布后 24 小时内波动剧烈，成交量较过去 30 日平均水平放大 **3.4 倍**。
-* 机构投资者（尤其是长线基金）呈现净流入态势，而散户资金存在明显的追涨杀跌现象。
-
-## 潜在风险与应对建议
-⚠️ **政策监管风险**：预计未来 3-6 个月内，相关监管机构将出台针对性的合规指引，企业需提前储备合规资源。
-⚠️ **技术替代风险**：竞品正在加速研发替代方案，技术护城河的窗口期可能仅剩 12-18 个月。
-
-**建议**：密切关注下个月的行业峰会及头部企业的财报电话会议，这将是验证上述推演的关键节点。`;
-
-                // Stream effect
-                let index = 0;
-                const cursor = '<span class="typing-cursor"></span>';
-                
-                return new Promise((resolve) => {
-                    const interval = setInterval(() => {
-                        // Add characters in chunks for better performance
-                        const chunkSize = Math.floor(Math.random() * 5) + 3;
-                        index += chunkSize;
-                        
-                        if (index >= mockReport.length) {
-                            index = mockReport.length;
-                            clearInterval(interval);
-                            reportContent.innerHTML = marked.parse(mockReport);
-                            resolve();
-                        } else {
-                            const partial = mockReport.substring(0, index);
-                            reportContent.innerHTML = marked.parse(partial) + cursor;
-                            // Auto scroll to bottom
-                            reportContent.scrollTop = reportContent.scrollHeight;
-                        }
-                    }, 30);
+        // ===================== Rendering Functions =====================
+        function renderMarkdownReport(md) {
+            let html = md;
+            // Headers
+            html = html.replace(/^### (.+)$/gm, '<div class="md-h3">$1</div>');
+            html = html.replace(/^## (.+)$/gm, '<div class="md-h2">$1</div>');
+            html = html.replace(/^# (.+)$/gm, '<div class="md-h1">$1</div>');
+            // Bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<span class="md-bold">$1</span>');
+            // Inline code
+            html = html.replace(/`(.+?)`/g, '<span class="md-code">$1</span>');
+            // Horizontal rules
+            html = html.replace(/^---$/gm, '<hr style="border:none;border-top:1px solid var(--border);margin:12px 0;">');
+            // Blockquotes
+            html = html.replace(/^> (.+)$/gm, '<div style="border-left:3px solid var(--primary);padding-left:10px;margin:8px 0;color:var(--text-muted);font-style:italic;">$1</div>');
+            // Lists
+            html = html.replace(/^- (.+)$/gm, '<div style="padding-left:12px;margin:2px 0;">• $1</div>');
+            html = html.replace(/^(\d+)\. (.+)$/gm, '<div style="padding-left:12px;margin:2px 0;">$1. $2</div>');
+            // Tables (simple)
+            html = html.replace(/^\|(.+)\|$/gm, function(match) {
+                const cells = match.split('|').filter(c => c.trim());
+                if (cells.every(c => /^[\s-]+$/.test(c))) return '';
+                const isHeader = false;
+                const tag = isHeader ? 'th' : 'td';
+                let row = '<tr>';
+                cells.forEach(c => {
+                    row += `<${tag} style="padding:6px 10px;border:1px solid var(--border);font-size:12px;">${c.trim()}</${tag}>`;
                 });
+                row += '</tr>';
+                return row;
+            });
+            // Wrap consecutive <tr> in tables
+            html = html.replace(/(<tr>[\s\S]*?<\/tr>\s*)+/g, function(match) {
+                return '<table style="width:100%;border-collapse:collapse;margin:8px 0;">' + match + '</table>';
+            });
+            // Newlines
+            html = html.replace(/\n/g, '<br>');
+            // Clean up multiple <br>
+            html = html.replace(/(<br>\s*){3,}/g, '<br><br>');
+
+            return `<div class="md-report">${html}</div>`;
+        }
+
+        function addMessage(role, content, isHTML) {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+
+            const avatar = role === 'user' ? '👤' : '🧠';
+            const name = role === 'user' ? '您' : 'NewsMind';
+            const time = new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+
+            msgDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-name">${name}</span>
+                        <span class="message-time">${time}</span>
+                        ${role === 'agent' ? '<div class="memory-indicator">🔗 对话记忆已激活</div>' : ''}
+                    </div>
+                    <div class="message-body">${isHTML ? content : `<p>${content}</p>`}</div>
+                </div>
+            `;
+
+            dom.chatMessages.appendChild(msgDiv);
+            dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+
+            state.messages.push({ role, content, time });
+            return msgDiv;
+        }
+
+        function addTypingIndicator() {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message agent';
+            msgDiv.id = 'typingIndicator';
+            msgDiv.innerHTML = `
+                <div class="message-avatar">🧠</div>
+                <div class="message-content">
+                    <div class="message-header">
+                        <span class="message-name">NewsMind</span>
+                        <span class="message-time">分析中...</span>
+                    </div>
+                    <div class="message-body">
+                        <div class="progress-steps">
+                            <div class="progress-step active" id="step1">
+                                <div class="step-icon">🔄</div>
+                                <span>正在搜索相关新闻...</span>
+                            </div>
+                            <div class="progress-step" id="step2">
+                                <div class="step-icon">⏳</div>
+                                <span>AI 模型深度分析中...</span>
+                            </div>
+                            <div class="progress-step" id="step3">
+                                <div class="step-icon">⏳</div>
+                                <span>生成结构化报告...</span>
+                            </div>
+                        </div>
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            dom.chatMessages.appendChild(msgDiv);
+            dom.chatMessages.scrollTop = dom.chatMessages.scrollHeight;
+
+            // Animate steps
+            setTimeout(() => {
+                const s1 = document.getElementById('step1');
+                const s2 = document.getElementById('step2');
+                if (s1) { s1.className = 'progress-step completed'; s1.querySelector('.step-icon').textContent = '✅'; s1.querySelector('span:last-child').textContent = '新闻搜索完成'; }
+                if (s2) { s2.className = 'progress-step active'; s2.querySelector('.step-icon').textContent = '🔄'; }
+            }, 800);
+
+            setTimeout(() => {
+                const s2 = document.getElementById('step2');
+                const s3 = document.getElementById('step3');
+                if (s2) { s2.className = 'progress-step completed'; s2.querySelector('.step-icon').textContent = '✅'; s2.querySelector('span:last-child').textContent = '深度分析完成'; }
+                if (s3) { s3.className = 'progress-step active'; s3.querySelector('.step-icon').textContent = '🔄'; }
+            }, 1600);
+
+            setTimeout(() => {
+                const s3 = document.getElementById('step3');
+                if (s3) { s3.className = 'progress-step completed'; s3.querySelector('.step-icon').textContent = '✅'; s3.querySelector('span:last-child').textContent = '报告生成完毕'; }
+            }, 2400);
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function updateReport(topic) {
+            const md = generateAnalysisReport(topic, state.timeRange);
+            dom.reportContent.innerHTML = renderMarkdownReport(md);
+            state.reportCount++;
+            updateStats();
+
+            if (!state.reportVisible) {
+                dom.reportPanel.classList.remove('hidden');
+                state.reportVisible = true;
+            }
+        }
+
+        function updateStats() {
+            dom.turnCount.textContent = state.turnCount;
+            dom.newsCount.textContent = state.newsCount;
+            dom.reportCount.textContent = state.reportCount;
+        }
+
+        // ===================== Core Actions =====================
+        function performSearch(topic, type) {
+            if (state.isProcessing || !topic.trim()) return;
+            state.isProcessing = true;
+            state.currentTopic = topic.trim();
+
+            // Hide welcome
+            if (dom.welcomeSection) {
+                dom.welcomeSection.style.display = 'none';
             }
 
-            function delay(ms) {
-                return new Promise(resolve => setTimeout(resolve, ms));
+            // Add user message
+            addMessage('user', topic);
+            state.turnCount++;
+
+            // Show typing
+            addTypingIndicator();
+
+            // Simulate processing delay
+            const delay = type === 'search' ? 3000 : 2500;
+            setTimeout(() => {
+                removeTypingIndicator();
+
+                const responseContent = generateAgentResponse(state.currentTopic, type || 'search');
+                addMessage('agent', responseContent, true);
+
+                if (type === 'search') {
+                    state.newsCount += 5;
+                    updateReport(state.currentTopic);
+                }
+
+                state.isProcessing = false;
+                updateStats();
+
+                // Bind keyword tag clicks
+                bindKeywordTags();
+            }, delay);
+        }
+
+        function bindKeywordTags() {
+            document.querySelectorAll('.keyword-tag').forEach(tag => {
+                tag.addEventListener('click', function() {
+                    const topic = this.getAttribute('data-topic');
+                    if (topic) {
+                        dom.searchInput.value = topic;
+                        performSearch(topic, 'search');
+                    }
+                });
+            });
+        }
+
+        function startNewChat() {
+            state.messages = [];
+            state.turnCount = 0;
+            state.newsCount = 0;
+            state.reportCount = 0;
+            state.currentTopic = '';
+            state.conversationHistory = [];
+
+            dom.chatMessages.innerHTML = '';
+            dom.welcomeSection.style.display = '';
+            dom.chatMessages.appendChild(dom.welcomeSection);
+
+            dom.reportContent.innerHTML = `
+                <div class="report-placeholder">
+                    <div class="report-placeholder-icon">📊</div>
+                    <div class="report-placeholder-text">搜索话题后将自动生成分析报告</div>
+                </div>
+            `;
+
+            updateStats();
+        }
+
+        // ===================== Event Bindings =====================
+        // Search button
+        dom.searchBtn.addEventListener('click', function() {
+            const query = dom.searchInput.value.trim();
+            if (query) {
+                performSearch(query, 'search');
+                dom.searchInput.value = '';
             }
         });
+
+        // Search input enter
+        dom.searchInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                dom.searchBtn.click();
+            }
+        });
+
+        // Chat input
+        dom.chatInput.addEventListener('input', function() {
+            dom.sendBtn.disabled = !this.value.trim();
+            // Auto resize
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        dom.chatInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                dom.sendBtn.click();
+            }
+        });
+
+        // Send button
+        dom.sendBtn.addEventListener('click', function() {
+            const input = dom.chatInput.value.trim();
+            if (input && !state.isProcessing) {
+                performSearch(input, 'followup');
+                dom.chatInput.value = '';
+                dom.chatInput.style.height = 'auto';
+                dom.sendBtn.disabled = true;
+            }
+        });
+
+        // Time filter buttons
+        document.querySelectorAll('.time-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.time-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                state.timeRange = this.getAttribute('data-range');
+
+                if (state.currentTopic) {
+                    updateReport(state.currentTopic);
+                }
+            });
+        });
+
+        // Quick actions
+        document.querySelectorAll('.quick-action').forEach(action => {
+            action.addEventListener('click', function() {
+                const query = this.getAttribute('data-query');
+                dom.searchInput.value = query;
+                performSearch(query, 'search');
+            });
+        });
+
+        // Toggle report panel
+        dom.toggleReportBtn.addEventListener('click', function() {
+            state.reportVisible = !state.reportVisible;
+            dom.reportPanel.classList.toggle('hidden', !state.reportVisible);
+        });
+
+        // New chat
+        dom.newChatBtn.addEventListener('click', startNewChat);
+
+        // Mobile menu
+        dom.mobileMenuBtn.addEventListener('click', function() {
+            dom.sidebar.classList.toggle('open');
+        });
+
+        // Input action buttons
+        dom.deepAnalysisBtn.addEventListener('click', function() {
+            if (state.currentTopic) {
+                performSearch('请对「' + state.currentTopic + '」进行深度分析', 'deep');
+            } else {
+                dom.chatInput.value = '';
+                dom.searchInput.focus();
+                dom.searchInput.setAttribute('placeholder', '请先搜索一个话题，再进行深度分析...');
+                setTimeout(() => {
+                    dom.searchInput.setAttribute('placeholder', '输入话题搜索新闻，如：人工智能、芯片产业、气候变化...');
+                }, 2000);
+            }
+        });
+
+        dom.trendBtn.addEventListener('click', function() {
+            if (state.currentTopic) {
+                performSearch('请预测「' + state.currentTopic + '」的未来趋势', 'trend');
+            }
+        });
+
+        dom.compareBtn.addEventListener('click', function() {
+            if (state.currentTopic) {
+                performSearch('请对「' + state.currentTopic + '」进行全球对比分析', 'compare');
+            }
+        });
+
+        dom.summaryBtn.addEventListener('click', function() {
+            if (state.currentTopic) {
+                performSearch('请为「' + state.currentTopic + '」生成智能摘要', 'summary');
+            }
+        });
+
+        // Copy report
+        dom.copyReportBtn.addEventListener('click', function() {
+            const reportText = dom.reportContent.innerText;
+            if (reportText && !reportText.includes('搜索话题后将自动生成')) {
+                navigator.clipboard.writeText(reportText).then(() => {
+                    this.textContent = '✅';
+                    setTimeout(() => { this.textContent = '📋'; }, 1500);
+                });
+            }
+        });
+
+        // Download report
+        dom.downloadReportBtn.addEventListener('click', function() {
+            const reportText = dom.reportContent.innerText;
+            if (reportText && !reportText.includes('搜索话题后将自动生成')) {
+                const blob = new Blob([reportText], { type: 'text/markdown' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `NewsMind_Report_${state.currentTopic || 'analysis'}_${new Date().toISOString().slice(0,10)}.md`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        });
+
+        // Capability card clicks
+        document.querySelectorAll('.capability-card').forEach(card => {
+            card.addEventListener('click', function() {
+                document.querySelectorAll('.capability-card').forEach(c => c.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Close sidebar on mobile when clicking outside
+        document.addEventListener('click', function(e) {
+            if (window.innerWidth <= 960 && dom.sidebar.classList.contains('open')) {
+                if (!dom.sidebar.contains(e.target) && e.target !== dom.mobileMenuBtn) {
+                    dom.sidebar.classList.remove('open');
+                }
+            }
+        });
+
+        // Initialize
+        updateStats();
     </script>
 </body>
 </html>
